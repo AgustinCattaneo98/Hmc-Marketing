@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(npm install https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz 2>&1)",
+      "PowerShell(npm audit 2>&1)",
+      "PowerShell(npm install jspdf jspdf-autotable 2>&1)",
+      "PowerShell(if \\($?\\) { } else { \"no recharts\" })",
+      "PowerShell(npm install recharts 2>&1)",
+      "PowerShell(npm install react-big-calendar date-fns 2>&1)"
+    ]
+  }
+}
