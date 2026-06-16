@@ -18,6 +18,7 @@ import {
 } from 'react-icons/tb'
 import { supabase } from '../lib/supabase'
 import { exportarBaseDatos } from '../lib/exportar'
+import { guardarConfig, subirImagenConfig } from '../lib/config'
 import { useAuth } from '../hooks/useAuth'
 import { iniciales } from '../lib/utils'
 import { applyTema, applyAccent } from '../lib/theme'
@@ -36,7 +37,6 @@ import {
   saveJSON,
   loadStr,
   saveStr,
-  fileToBase64,
 } from '../lib/settings'
 
 const TABS = [
@@ -163,6 +163,7 @@ function TabEmpresa({ showToast }) {
   const [logo, setLogo] = useState(() => loadStr(STORAGE.logo))
   const [portada, setPortada] = useState(() => loadStr(STORAGE.dashboardCover))
   const [form, setForm] = useState(() => loadJSON(STORAGE.empresa, DEFAULT_EMPRESA))
+  const [subiendo, setSubiendo] = useState('')
   const fileRef = useRef(null)
   const portadaRef = useRef(null)
 
@@ -173,34 +174,45 @@ function TabEmpresa({ showToast }) {
   async function handleLogo(e) {
     const file = e.target.files?.[0]
     if (!file) return
-    const base64 = await fileToBase64(file)
-    setLogo(base64)
-    saveStr(STORAGE.logo, base64)
+    setSubiendo('logo')
+    const { url, error } = await subirImagenConfig(file, 'logo')
+    setSubiendo('')
+    if (error) return showToast('No se pudo subir el logo: ' + error)
+    setLogo(url)
+    saveStr(STORAGE.logo, url)
+    await guardarConfig(STORAGE.logo, url)
     window.dispatchEvent(new Event(EVENT_LOGO))
   }
 
-  function eliminarLogo() {
+  async function eliminarLogo() {
     setLogo('')
     saveStr(STORAGE.logo, '')
+    await guardarConfig(STORAGE.logo, '')
     window.dispatchEvent(new Event(EVENT_LOGO))
   }
 
   async function handlePortada(e) {
     const file = e.target.files?.[0]
     if (!file) return
-    const base64 = await fileToBase64(file)
-    setPortada(base64)
-    saveStr(STORAGE.dashboardCover, base64)
+    setSubiendo('portada')
+    const { url, error } = await subirImagenConfig(file, 'portada')
+    setSubiendo('')
+    if (error) return showToast('No se pudo subir la portada: ' + error)
+    setPortada(url)
+    saveStr(STORAGE.dashboardCover, url)
+    await guardarConfig(STORAGE.dashboardCover, url)
   }
 
-  function eliminarPortada() {
+  async function eliminarPortada() {
     setPortada('')
     saveStr(STORAGE.dashboardCover, '')
+    await guardarConfig(STORAGE.dashboardCover, '')
   }
 
-  function guardar() {
+  async function guardar() {
     saveJSON(STORAGE.empresa, form)
-    showToast()
+    const { error } = await guardarConfig(STORAGE.empresa, form)
+    showToast(error ? 'Guardado local (sin conexión): ' + error : 'Cambios guardados')
   }
 
   return (
@@ -221,9 +233,10 @@ function TabEmpresa({ showToast }) {
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="rounded-md border border-hmc-border px-3 py-1.5 text-sm text-hmc-white transition-colors hover:bg-hmc-gray3"
+              disabled={subiendo === 'logo'}
+              className="rounded-md border border-hmc-border px-3 py-1.5 text-sm text-hmc-white transition-colors hover:bg-hmc-gray3 disabled:opacity-60"
             >
-              Cambiar logo
+              {subiendo === 'logo' ? 'Subiendo…' : 'Cambiar logo'}
             </button>
             {logo && (
               <button
@@ -267,9 +280,10 @@ function TabEmpresa({ showToast }) {
               <button
                 type="button"
                 onClick={() => portadaRef.current?.click()}
-                className="rounded-md border border-hmc-border px-3 py-1.5 text-sm text-hmc-white transition-colors hover:bg-hmc-gray3"
+                disabled={subiendo === 'portada'}
+                className="rounded-md border border-hmc-border px-3 py-1.5 text-sm text-hmc-white transition-colors hover:bg-hmc-gray3 disabled:opacity-60"
               >
-                Cambiar portada
+                {subiendo === 'portada' ? 'Subiendo…' : 'Cambiar portada'}
               </button>
               {portada && (
                 <button
@@ -347,6 +361,7 @@ function TabPerfil({ showToast }) {
   const [foto, setFoto] = useState(() => loadStr(STORAGE.perfilFoto))
   const [form, setForm] = useState(() => loadJSON(STORAGE.perfil, DEFAULT_PERFIL))
   const [firma, setFirma] = useState(() => loadStr(STORAGE.firma) || DEFAULT_FIRMA)
+  const [subiendo, setSubiendo] = useState(false)
   const fileRef = useRef(null)
 
   function update(f, v) {
@@ -356,15 +371,24 @@ function TabPerfil({ showToast }) {
   async function handleFoto(e) {
     const file = e.target.files?.[0]
     if (!file) return
-    const base64 = await fileToBase64(file)
-    setFoto(base64)
-    saveStr(STORAGE.perfilFoto, base64)
+    setSubiendo(true)
+    const { url, error } = await subirImagenConfig(file, 'perfil')
+    setSubiendo(false)
+    if (error) return showToast('No se pudo subir la foto: ' + error)
+    setFoto(url)
+    saveStr(STORAGE.perfilFoto, url)
+    await guardarConfig(STORAGE.perfilFoto, url)
   }
 
-  function guardar() {
+  async function guardar() {
     saveJSON(STORAGE.perfil, form)
     saveStr(STORAGE.firma, firma)
-    showToast()
+    const [r1, r2] = await Promise.all([
+      guardarConfig(STORAGE.perfil, form),
+      guardarConfig(STORAGE.firma, firma),
+    ])
+    const err = r1.error || r2.error
+    showToast(err ? 'Guardado local (sin conexión): ' + err : 'Cambios guardados')
   }
 
   return (
@@ -386,9 +410,10 @@ function TabPerfil({ showToast }) {
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="rounded-md border border-hmc-border px-3 py-1.5 text-sm text-hmc-white transition-colors hover:bg-hmc-gray3"
+          disabled={subiendo}
+          className="rounded-md border border-hmc-border px-3 py-1.5 text-sm text-hmc-white transition-colors hover:bg-hmc-gray3 disabled:opacity-60"
         >
-          Subir foto
+          {subiendo ? 'Subiendo…' : 'Subir foto'}
         </button>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFoto} />
       </div>
@@ -457,11 +482,13 @@ function TabApariencia() {
     loadJSON(STORAGE.apariencia, DEFAULT_APARIENCIA)
   )
   const [wallpaper, setWallpaper] = useState(() => loadStr(STORAGE.wallpaper))
+  const [subiendo, setSubiendo] = useState(false)
   const fileRef = useRef(null)
 
   function persistir(next) {
     setApariencia(next)
     saveJSON(STORAGE.apariencia, next)
+    guardarConfig(STORAGE.apariencia, next)
     window.dispatchEvent(new Event(EVENT_APARIENCIA))
   }
 
@@ -477,15 +504,23 @@ function TabApariencia() {
   async function handleWallpaper(e) {
     const file = e.target.files?.[0]
     if (!file) return
-    const base64 = await fileToBase64(file)
-    setWallpaper(base64)
-    saveStr(STORAGE.wallpaper, base64)
+    setSubiendo(true)
+    const { url, error } = await subirImagenConfig(file, 'wallpaper')
+    setSubiendo(false)
+    if (error) {
+      window.alert('No se pudo subir el fondo: ' + error)
+      return
+    }
+    setWallpaper(url)
+    saveStr(STORAGE.wallpaper, url)
+    await guardarConfig(STORAGE.wallpaper, url)
     persistir({ ...apariencia, fondo: 'imagen' })
   }
 
-  function eliminarFondo() {
+  async function eliminarFondo() {
     setWallpaper('')
     saveStr(STORAGE.wallpaper, '')
+    await guardarConfig(STORAGE.wallpaper, '')
     persistir({ ...apariencia, fondo: 'none' })
   }
 
@@ -553,13 +588,14 @@ function TabApariencia() {
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+          disabled={subiendo}
+          className={`rounded-md px-3 py-1.5 text-sm transition-colors disabled:opacity-60 ${
             apariencia.fondo === 'imagen'
               ? 'bg-hmc-white text-hmc-black'
               : 'border border-hmc-border text-hmc-muted hover:text-hmc-white'
           }`}
         >
-          Subir imagen
+          {subiendo ? 'Subiendo…' : 'Subir imagen'}
         </button>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleWallpaper} />
       </div>
@@ -630,9 +666,10 @@ function TabEmail({ showToast }) {
     setCfg((prev) => ({ ...prev, [f]: v }))
   }
 
-  function guardar() {
+  async function guardar() {
     saveJSON(STORAGE.emailConfig, cfg)
-    showToast('Configuración guardada')
+    const { error } = await guardarConfig(STORAGE.emailConfig, cfg)
+    showToast(error ? 'Guardado local (sin conexión): ' + error : 'Configuración guardada')
   }
 
   const toggles = [
@@ -817,9 +854,10 @@ function TabIntegraciones({ showToast }) {
     setCfg((prev) => ({ ...prev, [f]: v }))
   }
 
-  function guardar(mensaje = 'Credenciales guardadas') {
+  async function guardar(mensaje = 'Credenciales guardadas') {
     saveJSON(STORAGE.integraciones, cfg)
-    showToast(mensaje)
+    const { error } = await guardarConfig(STORAGE.integraciones, cfg)
+    showToast(error ? 'Guardado local (sin conexión): ' + error : mensaje)
   }
 
   // Estados de conexión (campos requeridos con valor).
@@ -842,9 +880,9 @@ function TabIntegraciones({ showToast }) {
           ⚠️ Seguridad de credenciales
         </div>
         <div style={{ color: '#ca4', fontSize: 11, marginTop: 4, opacity: 0.8 }}>
-          Estas credenciales se guardan únicamente en tu navegador (localStorage). No se
-          envían a ningún servidor externo. No compartas este dispositivo con personas no
-          autorizadas.
+          Estas credenciales se guardan en tu Supabase privado (protegido por RLS, solo
+          accesible con tu cuenta) y se cachean en este navegador. No se comparten con
+          terceros. No compartas este dispositivo con personas no autorizadas.
         </div>
       </div>
 

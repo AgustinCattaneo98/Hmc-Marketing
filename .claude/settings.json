@@ -6,7 +6,10 @@
       "PowerShell(npm install jspdf jspdf-autotable 2>&1)",
       "PowerShell(if \\($?\\) { } else { \"no recharts\" })",
       "PowerShell(npm install recharts 2>&1)",
-      "PowerShell(npm install react-big-calendar date-fns 2>&1)"
+      "PowerShell(npm install react-big-calendar date-fns 2>&1)",
+      "PowerShell(cmdkey /delete:\"LegacyGeneric:target=GitHub - https://api.github.com/mativia\"; \"EXIT=$LASTEXITCODE\"; \"=== credenciales github restantes \\(no deberia quedar ninguna\\) ===\"; cmdkey /list | Select-String -SimpleMatch \"github\")",
+      "PowerShell(cmdkey \"/delete:LegacyGeneric:target=GitHub - https://api.github.com/mativia\"; \"EXIT=$LASTEXITCODE\"; \"=== credenciales github restantes ===\"; $r = cmdkey /list | Select-String -SimpleMatch \"github\"; if \\($r\\) { $r } else { \"ninguna \\(limpio\\)\" })",
+      "PowerShell(cmd /c 'cmdkey /delete:\"LegacyGeneric:target=GitHub - https://api.github.com/mativia\"'; \"EXIT=$LASTEXITCODE\"; \"=== restantes ===\"; $r = cmdkey /list | Select-String -SimpleMatch \"github\"; if \\($r\\) { $r } else { \"ninguna \\(limpio\\)\" })"
     ]
   }
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import { STORAGE, EVENT_APARIENCIA, DEFAULT_APARIENCIA, loadJSON, loadStr } from '../lib/settings'
+import { cargarConfiguracion } from '../lib/config'
 
 function leerFondo() {
   return {
@@ -12,6 +13,21 @@ function leerFondo() {
 
 export default function Layout() {
   const [fondo, setFondo] = useState(leerFondo)
+  const [cargado, setCargado] = useState(false)
+
+  // Trae la configuración guardada en Supabase y la vuelca a localStorage
+  // ANTES de montar las páginas, para que vean logo/portada/perfil/etc.
+  useEffect(() => {
+    let activo = true
+    cargarConfiguracion().finally(() => {
+      if (!activo) return
+      setFondo(leerFondo())
+      setCargado(true)
+    })
+    return () => {
+      activo = false
+    }
+  }, [])
 
   // Re-lee el fondo cuando se cambia desde Configuración.
   useEffect(() => {
@@ -19,6 +35,14 @@ export default function Layout() {
     window.addEventListener(EVENT_APARIENCIA, handler)
     return () => window.removeEventListener(EVENT_APARIENCIA, handler)
   }, [])
+
+  if (!cargado) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-hmc-black text-hmc-muted">
+        <span className="animate-pulse text-2xl font-bold italic text-hmc-white">hmc</span>
+      </div>
+    )
+  }
 
   const tipo = fondo.apariencia.fondo
   const conImagen = tipo === 'imagen' && fondo.wallpaper
