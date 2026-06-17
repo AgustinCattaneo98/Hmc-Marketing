@@ -10,6 +10,8 @@ import {
   TbBrandWhatsapp,
   TbFileImport,
   TbFileSpreadsheet,
+  TbCopy,
+  TbX,
 } from 'react-icons/tb'
 import { exportarEntidad } from '../lib/exportar'
 import {
@@ -38,6 +40,8 @@ export default function Empresas() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [importOpen, setImportOpen] = useState(false)
+  const [selected, setSelected] = useState(() => new Set())
+  const [bulkBusy, setBulkBusy] = useState(false)
 
   async function loadEmpresas() {
     setLoading(true)
@@ -164,6 +168,82 @@ export default function Empresas() {
     return { exitosos, errores }
   }
 
+  // ---- Selección múltiple ----
+  const filteredIds = filtered.map((e) => e.id)
+  const allSelected = filteredIds.length > 0 && filteredIds.every((id) => selected.has(id))
+  const someSelected = filteredIds.some((id) => selected.has(id))
+
+  function toggleOne(id) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(filteredIds))
+  }
+
+  function clearSeleccion() {
+    setSelected(new Set())
+  }
+
+  async function bulkBorrar() {
+    const ids = [...selected]
+    if (!ids.length) return
+    if (!window.confirm(`¿Eliminar ${ids.length} empresa${ids.length === 1 ? '' : 's'}? Esta acción no se puede deshacer.`)) return
+    setBulkBusy(true)
+    setError('')
+    let fallidos = 0
+    for (const id of ids) {
+      const { error: err } = await deleteEmpresa(id)
+      if (err) fallidos++
+    }
+    setBulkBusy(false)
+    clearSeleccion()
+    await loadEmpresas()
+    if (fallidos) setError(`No se pudieron eliminar ${fallidos} empresa(s).`)
+  }
+
+  async function bulkDuplicar() {
+    const ids = [...selected]
+    if (!ids.length) return
+    setBulkBusy(true)
+    setError('')
+    let fallidos = 0
+    for (const id of ids) {
+      const emp = empresas.find((e) => e.id === id)
+      if (!emp) {
+        fallidos++
+        continue
+      }
+      // Excluye claves que no son columnas insertables (relaciones / sistema).
+      const { id: _id, created_at, contactos, empresa_segmentos, segmentos, ...cols } = emp
+      const { data: nueva, error: err } = await createEmpresa({
+        ...cols,
+        nombre: `${cols.nombre} (copia)`,
+      })
+      if (err || !nueva) {
+        fallidos++
+        continue
+      }
+      // Copia las etiquetas de segmento a la nueva empresa.
+      if (segmentos?.length) {
+        try {
+          await setEmpresaSegmentos(nueva.id, segmentos.map((s) => s.id))
+        } catch {
+          /* no bloquea la duplicación */
+        }
+      }
+    }
+    setBulkBusy(false)
+    clearSeleccion()
+    await loadEmpresas()
+    if (fallidos) setError(`No se pudieron duplicar ${fallidos} empresa(s).`)
+  }
+
   return (
     <div>
       {/* Header */}
@@ -232,6 +312,44 @@ export default function Empresas() {
         </select>
       </div>
 
+      {/* Barra de acciones masivas */}
+      {selected.size > 0 && (
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-md border border-hmc-border bg-hmc-gray2 px-4 py-2.5">
+          <span className="text-sm text-hmc-white">
+            {selected.size} seleccionada{selected.size === 1 ? '' : 's'}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={bulkDuplicar}
+              disabled={bulkBusy}
+              className="inline-flex items-center gap-2 rounded-md border border-hmc-border px-3 py-1.5 text-sm text-hmc-white transition-colors hover:bg-hmc-gray3 disabled:opacity-60"
+            >
+              <TbCopy size={16} />
+              Duplicar
+            </button>
+            <button
+              type="button"
+              onClick={bulkBorrar}
+              disabled={bulkBusy}
+              className="inline-flex items-center gap-2 rounded-md border border-red-900/50 bg-red-950/20 px-3 py-1.5 text-sm text-red-400 transition-colors hover:bg-red-950/40 disabled:opacity-60"
+            >
+              <TbTrash size={16} />
+              Borrar
+            </button>
+            <button
+              type="button"
+              onClick={clearSeleccion}
+              disabled={bulkBusy}
+              className="inline-flex items-center gap-1 rounded-md border border-hmc-border px-3 py-1.5 text-sm text-hmc-muted transition-colors hover:text-hmc-white disabled:opacity-60"
+            >
+              <TbX size={16} />
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
       {error && (
         <p className="mb-4 rounded-md border border-red-900/50 bg-red-950/30 px-4 py-2.5 text-sm text-red-400">
           {error}
@@ -241,7 +359,19 @@ export default function Empresas() {
       {/* Contenido */}
       <div className="overflow-hidden rounded-lg border border-hmc-border bg-hmc-gray2">
         {/* Encabezado de tabla */}
-        <div className="grid grid-cols-[48px_2fr_140px_160px_120px_80px_80px] items-center gap-4 border-b border-hmc-border px-5 py-2.5 text-xs uppercase tracking-wide text-hmc-muted">
+        <div className="grid grid-cols-[36px_48px_2fr_140px_160px_120px_80px_80px] items-center gap-4 border-b border-hmc-border px-5 py-2.5 text-xs uppercase tracking-wide text-hmc-muted">
+          <span className="flex items-center">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              ref={(el) => {
+                if (el) el.indeterminate = someSelected && !allSelected
+              }}
+              onChange={toggleAll}
+              className="h-4 w-4 cursor-pointer accent-hmc-white"
+              aria-label="Seleccionar todas"
+            />
+          </span>
           <span />
           <span>Nombre</span>
           <span>Segmento</span>
@@ -260,8 +390,19 @@ export default function Empresas() {
             <div
               key={empresa.id}
               onClick={() => navigate(`/empresas/${empresa.id}`)}
-              className="grid cursor-pointer grid-cols-[48px_2fr_140px_160px_120px_80px_80px] items-center gap-4 border-b border-hmc-border px-5 py-3 text-sm transition-colors last:border-b-0 hover:bg-hmc-gray3/60 active:scale-[0.99]"
+              className={`grid cursor-pointer grid-cols-[36px_48px_2fr_140px_160px_120px_80px_80px] items-center gap-4 border-b border-hmc-border px-5 py-3 text-sm transition-colors last:border-b-0 hover:bg-hmc-gray3/60 active:scale-[0.99] ${
+                selected.has(empresa.id) ? 'bg-hmc-gray3/40' : ''
+              }`}
             >
+              <span className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                <input
+                  type="checkbox"
+                  checked={selected.has(empresa.id)}
+                  onChange={() => toggleOne(empresa.id)}
+                  className="h-4 w-4 cursor-pointer accent-hmc-white"
+                  aria-label={`Seleccionar ${empresa.nombre}`}
+                />
+              </span>
               {empresa.logo_url ? (
                 <img
                   src={empresa.logo_url}
@@ -382,8 +523,9 @@ function SkeletonRows() {
       {Array.from({ length: 5 }).map((_, i) => (
         <div
           key={i}
-          className="grid grid-cols-[48px_2fr_140px_160px_120px_80px_80px] items-center gap-4 border-b border-hmc-border px-5 py-3 last:border-b-0"
+          className="grid grid-cols-[36px_48px_2fr_140px_160px_120px_80px_80px] items-center gap-4 border-b border-hmc-border px-5 py-3 last:border-b-0"
         >
+          <div className="h-4 w-4 animate-pulse rounded bg-hmc-gray3" />
           <div className="h-9 w-9 animate-pulse rounded-md bg-hmc-gray3" />
           <div className="h-3.5 w-3/4 animate-pulse rounded bg-hmc-gray3" />
           <div className="h-3.5 w-16 animate-pulse rounded bg-hmc-gray3" />

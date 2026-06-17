@@ -9,6 +9,8 @@ import {
   TbUsers,
   TbFileImport,
   TbFileSpreadsheet,
+  TbCopy,
+  TbX,
 } from 'react-icons/tb'
 import { exportarEntidad } from '../lib/exportar'
 import {
@@ -36,6 +38,8 @@ export default function Contactos() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [importOpen, setImportOpen] = useState(false)
+  const [selected, setSelected] = useState(() => new Set())
+  const [bulkBusy, setBulkBusy] = useState(false)
 
   async function loadContactos() {
     setLoading(true)
@@ -125,6 +129,71 @@ export default function Contactos() {
     return { exitosos, errores }
   }
 
+  // ---- Selección múltiple ----
+  const filteredIds = filtered.map((c) => c.id)
+  const allSelected = filteredIds.length > 0 && filteredIds.every((id) => selected.has(id))
+  const someSelected = filteredIds.some((id) => selected.has(id))
+
+  function toggleOne(id) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(filteredIds))
+  }
+
+  function clearSeleccion() {
+    setSelected(new Set())
+  }
+
+  async function bulkBorrar() {
+    const ids = [...selected]
+    if (!ids.length) return
+    if (!window.confirm(`¿Eliminar ${ids.length} contacto${ids.length === 1 ? '' : 's'}? Esta acción no se puede deshacer.`)) return
+    setBulkBusy(true)
+    setError('')
+    let fallidos = 0
+    for (const id of ids) {
+      const { error: err } = await deleteContacto(id)
+      if (err) fallidos++
+    }
+    setBulkBusy(false)
+    clearSeleccion()
+    await loadContactos()
+    if (fallidos) setError(`No se pudieron eliminar ${fallidos} contacto(s).`)
+  }
+
+  async function bulkDuplicar() {
+    const ids = [...selected]
+    if (!ids.length) return
+    setBulkBusy(true)
+    setError('')
+    let fallidos = 0
+    for (const id of ids) {
+      const c = contactos.find((x) => x.id === id)
+      if (!c) {
+        fallidos++
+        continue
+      }
+      // Excluye claves que no son columnas insertables (relación / sistema).
+      const { id: _id, created_at, empresa, ...cols } = c
+      const { error: err } = await createContacto({
+        ...cols,
+        nombre: `${cols.nombre ?? ''} (copia)`.trim(),
+      })
+      if (err) fallidos++
+    }
+    setBulkBusy(false)
+    clearSeleccion()
+    await loadContactos()
+    if (fallidos) setError(`No se pudieron duplicar ${fallidos} contacto(s).`)
+  }
+
   return (
     <div>
       {/* Header */}
@@ -211,6 +280,57 @@ export default function Contactos() {
         </p>
       )}
 
+      {/* Barra de selección / acciones masivas */}
+      {!loading && filtered.length > 0 && (
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-hmc-muted">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              ref={(el) => {
+                if (el) el.indeterminate = someSelected && !allSelected
+              }}
+              onChange={toggleAll}
+              className="h-4 w-4 cursor-pointer accent-hmc-white"
+            />
+            {selected.size > 0
+              ? `${selected.size} seleccionado${selected.size === 1 ? '' : 's'}`
+              : 'Seleccionar todos'}
+          </label>
+          {selected.size > 0 && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={bulkDuplicar}
+                disabled={bulkBusy}
+                className="inline-flex items-center gap-2 rounded-md border border-hmc-border px-3 py-1.5 text-sm text-hmc-white transition-colors hover:bg-hmc-gray3 disabled:opacity-60"
+              >
+                <TbCopy size={16} />
+                Duplicar
+              </button>
+              <button
+                type="button"
+                onClick={bulkBorrar}
+                disabled={bulkBusy}
+                className="inline-flex items-center gap-2 rounded-md border border-red-900/50 bg-red-950/20 px-3 py-1.5 text-sm text-red-400 transition-colors hover:bg-red-950/40 disabled:opacity-60"
+              >
+                <TbTrash size={16} />
+                Borrar
+              </button>
+              <button
+                type="button"
+                onClick={clearSeleccion}
+                disabled={bulkBusy}
+                className="inline-flex items-center gap-1 rounded-md border border-hmc-border px-3 py-1.5 text-sm text-hmc-muted transition-colors hover:text-hmc-white disabled:opacity-60"
+              >
+                <TbX size={16} />
+                Cancelar
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Lista */}
       {loading ? (
         <SkeletonRows />
@@ -222,8 +342,21 @@ export default function Contactos() {
             <div
               key={c.id}
               onClick={() => openEdit(c)}
-              className="flex cursor-pointer items-center gap-4 rounded-lg border border-hmc-border bg-hmc-gray2 p-4 transition-colors hover:bg-hmc-gray3/60 active:scale-[0.99]"
+              className={`flex cursor-pointer items-center gap-4 rounded-lg border bg-hmc-gray2 p-4 transition-colors hover:bg-hmc-gray3/60 active:scale-[0.99] ${
+                selected.has(c.id) ? 'border-hmc-white/40 bg-hmc-gray3/40' : 'border-hmc-border'
+              }`}
             >
+              {/* Checkbox de selección */}
+              <span className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                <input
+                  type="checkbox"
+                  checked={selected.has(c.id)}
+                  onChange={() => toggleOne(c.id)}
+                  className="h-4 w-4 cursor-pointer accent-hmc-white"
+                  aria-label="Seleccionar contacto"
+                />
+              </span>
+
               {/* Avatar */}
               {c.foto_url ? (
                 <img
