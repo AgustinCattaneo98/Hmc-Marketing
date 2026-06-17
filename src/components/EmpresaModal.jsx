@@ -1,17 +1,10 @@
 import { useEffect, useState } from 'react'
 import { TbX } from 'react-icons/tb'
-
-const SEGMENTOS = [
-  { value: 'hotel', label: 'Hotel' },
-  { value: 'inmobiliaria', label: 'Inmobiliaria' },
-  { value: 'hostel', label: 'Hostel' },
-  { value: 'corporativo', label: 'Corporativo' },
-  { value: 'otro', label: 'Otro' },
-]
+import { getEmpresaSegmentos } from '../lib/db'
+import SegmentosInput from './SegmentosInput'
 
 const EMPTY = {
   nombre: '',
-  segmento: 'hotel',
   ciudad: 'Córdoba',
   direccion: '',
   provincia: '',
@@ -39,6 +32,7 @@ const labelClass = 'mb-1.5 block text-xs uppercase tracking-wide text-hmc-muted'
 // `onDelete` (opcional) => función async que borra y devuelve error|null.
 export default function EmpresaModal({ empresa, onClose, onSave, onDelete }) {
   const [form, setForm] = useState(EMPTY)
+  const [segmentos, setSegmentos] = useState([])
   const [contacto, setContacto] = useState(EMPTY_CONTACTO)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -55,7 +49,6 @@ export default function EmpresaModal({ empresa, onClose, onSave, onDelete }) {
     if (empresa) {
       setForm({
         nombre: empresa.nombre ?? '',
-        segmento: empresa.segmento ?? 'hotel',
         ciudad: empresa.ciudad ?? 'Córdoba',
         direccion: empresa.direccion ?? '',
         provincia: empresa.provincia ?? '',
@@ -66,8 +59,13 @@ export default function EmpresaModal({ empresa, onClose, onSave, onDelete }) {
         instagram: empresa.instagram ?? '',
         notas: empresa.notas ?? '',
       })
+      // Carga los segmentos actuales de la empresa.
+      getEmpresaSegmentos(empresa.id)
+        .then((segs) => setSegmentos(segs ?? []))
+        .catch(() => setSegmentos([]))
     } else {
       setForm(EMPTY)
+      setSegmentos([])
     }
     setContacto(EMPTY_CONTACTO)
     setError('')
@@ -107,7 +105,11 @@ export default function EmpresaModal({ empresa, onClose, onSave, onDelete }) {
       : null
 
     setSaving(true)
-    const ok = await onSave({ empresa: empresaPayload, contacto: contactoPayload })
+    const ok = await onSave({
+      empresa: empresaPayload,
+      contacto: contactoPayload,
+      segmentos: segmentos.map((s) => s.id),
+    })
     setSaving(false)
 
     // onSave devuelve un mensaje de error si falló, o null/undefined si OK.
@@ -152,22 +154,9 @@ export default function EmpresaModal({ empresa, onClose, onSave, onDelete }) {
               />
             </div>
 
-            <div>
-              <label className={labelClass} htmlFor="segmento">
-                Segmento
-              </label>
-              <select
-                id="segmento"
-                className={inputClass}
-                value={form.segmento}
-                onChange={(e) => update('segmento', e.target.value)}
-              >
-                {SEGMENTOS.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
+            <div className="sm:col-span-2">
+              <label className={labelClass}>Segmentos</label>
+              <SegmentosInput value={segmentos} onChange={setSegmentos} />
             </div>
 
             <div>

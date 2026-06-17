@@ -7,21 +7,37 @@ import { supabase } from './supabase'
 // EMPRESAS
 // ============================================================
 
-export function getEmpresas() {
-  // Incluye el conteo de contactos relacionados (contactos[0].count).
-  return supabase
+export async function getEmpresas() {
+  // Incluye el conteo de contactos relacionados (contactos[0].count) y los
+  // segmentos (etiquetas) asignados vía la tabla puente empresa_segmentos.
+  const { data, error } = await supabase
     .from('empresas')
-    .select('*, contactos(count)')
+    .select('*, contactos(count), empresa_segmentos(segmentos(id, nombre, color))')
     .order('created_at', { ascending: false })
+  if (error) return { data: null, error }
+  // Aplanamos empresa_segmentos -> empresa.segmentos = [{id, nombre, color}, ...]
+  const normalizado = (data ?? []).map((e) => ({
+    ...e,
+    segmentos: (e.empresa_segmentos ?? []).map((r) => r.segmentos).filter(Boolean),
+  }))
+  return { data: normalizado, error: null }
 }
 
-export function getEmpresa(id) {
-  // Incluye los contactos vinculados a la empresa.
-  return supabase
+export async function getEmpresa(id) {
+  // Incluye los contactos vinculados y los segmentos (etiquetas) asignados.
+  const { data, error } = await supabase
     .from('empresas')
-    .select('*, contactos(*)')
+    .select('*, contactos(*), empresa_segmentos(segmentos(id, nombre, color))')
     .eq('id', id)
     .single()
+  if (error) return { data: null, error }
+  return {
+    data: {
+      ...data,
+      segmentos: (data.empresa_segmentos ?? []).map((r) => r.segmentos).filter(Boolean),
+    },
+    error: null,
+  }
 }
 
 export function createEmpresa(empresa) {
@@ -667,4 +683,52 @@ export function getVentas() {
        contacto:contacto_id(nombre, apellido)`
     )
     .order('fecha_cobro', { ascending: false })
+}
+
+// ============================================================
+// SEGMENTOS (etiquetas dinámicas de empresas)
+// Nota: estas funciones lanzan el error (throw) en vez de devolver
+// { data, error }, por eso los consumidores usan try/catch.
+// ============================================================
+
+export async function getSegmentos() {
+  const { data, error } = await supabase
+    .from('segmentos')
+    .select('*')
+    .order('nombre')
+  if (error) throw error
+  return data
+}
+
+export async function createSegmento(nombre) {
+  // Paleta de colores que rota automáticamente según cuántos haya.
+  const colores = ['#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#10B981',
+                   '#EC4899', '#14B8A6', '#F97316', '#6366F1', '#84CC16']
+  const { data: existing } = await supabase.from('segmentos').select('id').order('created_at')
+  const color = colores[(existing?.length ?? 0) % colores.length]
+  const { data, error } = await supabase
+    .from('segmentos')
+    .insert({ nombre: nombre.trim(), color })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function getEmpresaSegmentos(empresa_id) {
+  const { data, error } = await supabase
+    .from('empresa_segmentos')
+    .select('segmento_id, segmentos(id, nombre, color)')
+    .eq('empresa_id', empresa_id)
+  if (error) throw error
+  return data.map((r) => r.segmentos)
+}
+
+export async function setEmpresaSegmentos(empresa_id, segmento_ids) {
+  // Reemplaza todos los segmentos de la empresa.
+  await supabase.from('empresa_segmentos').delete().eq('empresa_id', empresa_id)
+  if (!segmento_ids.length) return
+  const rows = segmento_ids.map((sid) => ({ empresa_id, segmento_id: sid }))
+  const { error } = await supabase.from('empresa_segmentos').insert(rows)
+  if (error) throw error
 }

@@ -14,25 +14,20 @@ import { exportarEntidad } from '../lib/exportar'
 import {
   getContactos,
   getEmpresas,
+  getSegmentos,
   createContacto,
   updateContacto,
   deleteContacto,
 } from '../lib/db'
 import { iniciales, limpiarWhatsapp } from '../lib/utils'
-import SegmentoBadge from '../components/SegmentoBadge'
+import { SegmentoPills } from '../components/SegmentoPill'
 import ContactoModal from '../components/ContactoModal'
 import ImportModal from '../components/ImportModal'
-
-const SEGMENTO_OPCIONES = [
-  { value: 'hotel', label: 'Hotel' },
-  { value: 'inmobiliaria', label: 'Inmobiliaria' },
-  { value: 'hostel', label: 'Hostel' },
-  { value: 'corporativo', label: 'Corporativo' },
-]
 
 export default function Contactos() {
   const [contactos, setContactos] = useState([])
   const [empresas, setEmpresas] = useState([])
+  const [segmentosCatalogo, setSegmentosCatalogo] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
@@ -58,19 +53,29 @@ export default function Contactos() {
   useEffect(() => {
     loadContactos()
     getEmpresas().then(({ data }) => setEmpresas(data ?? []))
+    getSegmentos()
+      .then((data) => setSegmentosCatalogo(data ?? []))
+      .catch(() => {})
   }, [])
+
+  // Mapa empresa_id -> segmentos asignados (para filtrar contactos por etiqueta).
+  const empresaSegmentos = useMemo(() => {
+    const map = {}
+    for (const e of empresas) map[e.id] = e.segmentos ?? []
+    return map
+  }, [empresas])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return contactos.filter((c) => {
       const nombreCompleto = `${c.nombre ?? ''} ${c.apellido ?? ''}`.toLowerCase()
       const matchSearch = !q || nombreCompleto.includes(q)
-      const matchSegmento =
-        !segmentoFiltro || c.empresa?.segmento === segmentoFiltro
+      const segs = empresaSegmentos[c.empresa_id] ?? []
+      const matchSegmento = !segmentoFiltro || segs.some((s) => s.id === segmentoFiltro)
       const matchEmpresa = !empresaFiltro || c.empresa_id === empresaFiltro
       return matchSearch && matchSegmento && matchEmpresa
     })
-  }, [contactos, search, segmentoFiltro, empresaFiltro])
+  }, [contactos, search, segmentoFiltro, empresaFiltro, empresaSegmentos])
 
   function openCreate() {
     setEditing(null)
@@ -180,9 +185,9 @@ export default function Contactos() {
           className="w-44 rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white"
         >
           <option value="">Todos los segmentos</option>
-          {SEGMENTO_OPCIONES.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
+          {segmentosCatalogo.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.nombre}
             </option>
           ))}
         </select>
@@ -244,9 +249,7 @@ export default function Contactos() {
                   {c.empresa ? (
                     <span className="inline-flex items-center gap-2 text-xs text-hmc-muted">
                       <span className="truncate">{c.empresa.nombre}</span>
-                      {c.empresa.segmento && (
-                        <SegmentoBadge segmento={c.empresa.segmento} />
-                      )}
+                      <SegmentoPills segmentos={empresaSegmentos[c.empresa_id]} max={2} />
                     </span>
                   ) : (
                     <span className="text-xs text-hmc-muted/70">Sin empresa</span>

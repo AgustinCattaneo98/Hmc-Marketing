@@ -32,6 +32,7 @@ import { ETAPA_MAP } from '../lib/crm'
 import { TIPO_ACTIVIDAD_MAP } from '../lib/campanas'
 import { ESTADOS_COT } from '../lib/cotizaciones'
 import { STORAGE, DEFAULT_PERFIL, loadJSON, loadStr } from '../lib/settings'
+import { SegmentoPills } from '../components/SegmentoPill'
 
 const COVER_KEY = 'hmc_dashboard_cover'
 const PERIODOS = [
@@ -430,7 +431,10 @@ function UltimasEmpresas({ data, loading, onVerTodas, onIr }) {
               )}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm text-hmc-white">{e.nombre}</p>
-                <p className="text-[11px] text-hmc-muted">{e.segmento || '—'} · {tiempoRelativo(e.created_at)}</p>
+                <div className="mt-0.5 flex flex-wrap items-center gap-1">
+                  <SegmentoPills segmentos={e.segmentos} max={2} />
+                  <span className="text-[11px] text-hmc-muted">{tiempoRelativo(e.created_at)}</span>
+                </div>
               </div>
             </button>
           ))}

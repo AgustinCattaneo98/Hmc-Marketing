@@ -18,23 +18,18 @@ import {
   updateEmpresa,
   deleteEmpresa,
   createContacto,
+  getSegmentos,
+  setEmpresaSegmentos,
 } from '../lib/db'
 import { iniciales, limpiarWhatsapp } from '../lib/utils'
 import EmpresaModal from '../components/EmpresaModal'
 import ImportModal from '../components/ImportModal'
-import SegmentoBadge from '../components/SegmentoBadge'
-
-const SEGMENTO_OPCIONES = [
-  { value: 'hotel', label: 'Hotel' },
-  { value: 'inmobiliaria', label: 'Inmobiliaria' },
-  { value: 'hostel', label: 'Hostel' },
-  { value: 'corporativo', label: 'Corporativo' },
-  { value: 'otro', label: 'Otro' },
-]
+import { SegmentoPills } from '../components/SegmentoPill'
 
 export default function Empresas() {
   const navigate = useNavigate()
   const [empresas, setEmpresas] = useState([])
+  const [segmentosCatalogo, setSegmentosCatalogo] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
@@ -58,6 +53,9 @@ export default function Empresas() {
 
   useEffect(() => {
     loadEmpresas()
+    getSegmentos()
+      .then((data) => setSegmentosCatalogo(data ?? []))
+      .catch(() => {})
   }, [])
 
   // Cantidad de contactos viene como empresa.contactos[0].count.
@@ -68,7 +66,8 @@ export default function Empresas() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return empresas.filter((e) => {
-      const matchSegmento = !segmentoFiltro || e.segmento === segmentoFiltro
+      const matchSegmento =
+        !segmentoFiltro || (e.segmentos ?? []).some((s) => s.id === segmentoFiltro)
       const matchSearch = !q || (e.nombre ?? '').toLowerCase().includes(q)
       return matchSegmento && matchSearch
     })
@@ -96,6 +95,15 @@ export default function Empresas() {
       const { data, error: err } = await createEmpresa(payload.empresa)
       if (err) return 'No se pudo guardar: ' + err.message
       empresaId = data.id
+    }
+
+    // Segmentos (etiquetas): reemplaza el set completo de la empresa.
+    if (payload.segmentos) {
+      try {
+        await setEmpresaSegmentos(empresaId, payload.segmentos)
+      } catch (e) {
+        return 'Empresa guardada, pero fallaron los segmentos: ' + (e?.message ?? e)
+      }
     }
 
     // Contacto principal opcional: se crea asociado a la empresa.
@@ -201,9 +209,9 @@ export default function Empresas() {
           className="w-48 rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white"
         >
           <option value="">Todos los segmentos</option>
-          {SEGMENTO_OPCIONES.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
+          {segmentosCatalogo.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.nombre}
             </option>
           ))}
         </select>
@@ -251,9 +259,9 @@ export default function Empresas() {
                 </div>
               )}
               <span className="min-w-0 truncate font-medium text-hmc-white">{empresa.nombre}</span>
-              <span className="min-w-0 truncate">
-                {empresa.segmento ? (
-                  <SegmentoBadge segmento={empresa.segmento} />
+              <span className="flex min-w-0 flex-wrap items-center gap-1">
+                {empresa.segmentos?.length ? (
+                  <SegmentoPills segmentos={empresa.segmentos} max={2} />
                 ) : (
                   <span className="text-hmc-muted">—</span>
                 )}

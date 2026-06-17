@@ -116,7 +116,7 @@ export function useDashboard(periodo) {
           .in('etapa', ['en_proceso', 'propuesta_enviada'])
           .order('updated_at', { ascending: false })
           .limit(5),
-        supabase.from('empresas').select('id, nombre, segmento, logo_url, created_at').order('created_at', { ascending: false }).limit(4),
+        supabase.from('empresas').select('id, nombre, logo_url, created_at, empresa_segmentos(segmentos(id, nombre, color))').order('created_at', { ascending: false }).limit(4),
         supabase.from('cotizaciones').select('id, numero, titulo, estado, total_usd').order('created_at', { ascending: false }).limit(4),
         supabase.from('productos').select('id, nombre, activo, created_at, categoria:categoria_id(nombre, color)').order('created_at', { ascending: false }),
         supabase.from('ventas').select('total_usd, total_ars, fecha_cobro').gte('fecha_cobro', inicio),
@@ -182,7 +182,10 @@ export function useDashboard(periodo) {
         actividad,
         pendientes: pendientes.data ?? [],
         enProceso: enProceso.data ?? [],
-        ultimasEmpresas: ultEmpresas.data ?? [],
+        ultimasEmpresas: (ultEmpresas.data ?? []).map((e) => ({
+          ...e,
+          segmentos: (e.empresa_segmentos ?? []).map((r) => r.segmentos).filter(Boolean),
+        })),
         cotizaciones: cotizaciones.data ?? [],
         productos: {
           activos,

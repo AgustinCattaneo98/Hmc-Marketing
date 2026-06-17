@@ -21,7 +21,7 @@ import {
 } from '../lib/db'
 import { supabase } from '../lib/supabase'
 import { iniciales, limpiarWhatsapp } from '../lib/utils'
-import SegmentoBadge from '../components/SegmentoBadge'
+import { SegmentoPills } from '../components/SegmentoPill'
 import EmpresaModal from '../components/EmpresaModal'
 import ContactoModal from '../components/ContactoModal'
 
@@ -231,8 +231,8 @@ export default function EmpresaDetalle() {
               <h1 className="text-2xl font-semibold text-hmc-white">
                 {empresa.nombre}
               </h1>
-              <div className="mt-2 flex items-center gap-3">
-                {empresa.segmento && <SegmentoBadge segmento={empresa.segmento} />}
+              <div className="mt-2 flex flex-wrap items-center gap-1">
+                <SegmentoPills segmentos={empresa.segmentos} max={0} />
                 {uploading && (
                   <span className="text-xs text-hmc-muted">Subiendo logo…</span>
                 )}
