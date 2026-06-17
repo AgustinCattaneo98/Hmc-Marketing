@@ -732,3 +732,22 @@ export async function setEmpresaSegmentos(empresa_id, segmento_ids) {
   const { error } = await supabase.from('empresa_segmentos').insert(rows)
   if (error) throw error
 }
+
+// Asocia un segmento (por nombre) a una empresa. Lo busca case-insensitive en
+// el catálogo y, si no existe, lo crea. Usado al importar empresas desde CSV.
+export async function addEmpresaSegmentoPorNombre(empresa_id, nombre) {
+  const limpio = (nombre ?? '').toString().trim()
+  if (!limpio) return
+  // a/b. Buscar el segmento existente (case-insensitive) o crearlo.
+  const { data: existing } = await supabase
+    .from('segmentos')
+    .select('id, nombre')
+    .ilike('nombre', limpio)
+    .maybeSingle()
+  const segmentoId = existing ? existing.id : (await createSegmento(limpio)).id
+  // c. Vincular empresa ↔ segmento.
+  const { error } = await supabase
+    .from('empresa_segmentos')
+    .insert({ empresa_id, segmento_id: segmentoId })
+  if (error) throw error
+}

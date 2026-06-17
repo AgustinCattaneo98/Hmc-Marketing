@@ -2,7 +2,6 @@ import { useMemo, useRef, useState } from 'react'
 import { TbX, TbFileSpreadsheet, TbUpload, TbCheck, TbAlertTriangle } from 'react-icons/tb'
 
 const MAX_FILAS = 500
-const SEGMENTOS_VALIDOS = ['hotel', 'inmobiliaria', 'hostel', 'corporativo', 'otro']
 
 // Configuración por tipo: qué campos del sistema existen y qué encabezados
 // de Excel/CSV se aceptan para cada uno (case/acento-insensitive).
@@ -118,10 +117,9 @@ export default function ImportModal({ tipo, empresas = [], categorias = [], onCl
       } else if (esBool) {
         data[campo] = limpio === '' ? true : !['no', 'false', '0', 'inactivo', 'inactiva'].includes(norm(limpio))
       } else if (campo === 'segmento') {
-        if (!limpio) data.segmento = null
-        else data.segmento = SEGMENTOS_VALIDOS.includes(norm(limpio))
-          ? norm(limpio)
-          : 'otro'
+        // Se conserva el valor crudo del CSV; al importar se resuelve como tag
+        // (se busca o crea en `segmentos` y se vincula en `empresa_segmentos`).
+        data.segmento = limpio || null
       } else {
         data[campo] = limpio === '' ? null : limpio
       }

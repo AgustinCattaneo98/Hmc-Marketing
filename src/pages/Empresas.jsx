@@ -20,6 +20,7 @@ import {
   createContacto,
   getSegmentos,
   setEmpresaSegmentos,
+  addEmpresaSegmentoPorNombre,
 } from '../lib/db'
 import { iniciales, limpiarWhatsapp } from '../lib/utils'
 import EmpresaModal from '../components/EmpresaModal'
@@ -140,9 +141,23 @@ export default function Empresas() {
     let exitosos = 0
     const errores = []
     for (let i = 0; i < filas.length; i++) {
-      const { error: err } = await createEmpresa(filas[i].data)
-      if (err) errores.push({ fila: filas[i].fila, motivo: err.message })
-      else exitosos++
+      // El segmento del CSV no es columna de empresas: se procesa como tag aparte.
+      const { segmento, ...empresaData } = filas[i].data
+      const { data: nueva, error: err } = await createEmpresa(empresaData)
+      if (err) {
+        errores.push({ fila: filas[i].fila, motivo: err.message })
+      } else {
+        exitosos++
+        // Si vino segmento en el CSV, lo asignamos como etiqueta. Si falla, no
+        // bloquea la importación: la empresa ya quedó creada (solo se loguea).
+        if (segmento) {
+          try {
+            await addEmpresaSegmentoPorNombre(nueva.id, segmento)
+          } catch (e) {
+            console.error(`No se pudo asignar el segmento "${segmento}" a la empresa importada:`, e)
+          }
+        }
+      }
       onProgress(i + 1, filas.length)
     }
     await loadEmpresas()
