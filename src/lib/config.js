@@ -18,6 +18,8 @@ const MAP = {
   [STORAGE.dashboardCover]: 'dashboard_cover_url',
   [STORAGE.perfilFoto]: 'perfil_foto_url',
   [STORAGE.wallpaper]: 'wallpaper_url',
+  [STORAGE.cotCondPago]: 'cot_condiciones_pago',
+  [STORAGE.cotCondGenerales]: 'cot_condiciones_generales',
 }
 
 // Claves cuyo valor es un objeto JSON (el resto son strings: url / texto).

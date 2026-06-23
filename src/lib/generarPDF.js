@@ -324,67 +324,43 @@ export async function generarCotizacionPDF(cotizacion, dolarVenta) {
 
   y = belowY + 4
 
-  // ── 7. CONDICIONES DE PAGO ────────────────────────
-  if (pageH - y < 42) y = nuevaPagina()
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(9)
-  doc.setTextColor(...NEGRO)
-  doc.setCharSpace(0.6)
-  doc.text('CONDICIONES DE PAGO', margin, y)
-  doc.setCharSpace(0)
-  y += 6.5
-
-  const COND_TXT = [55, 55, 55]
-
-  // Texto libre de condiciones, si la cotización lo trae.
-  if (cotizacion.condiciones_pago) {
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(9)
-    doc.setTextColor(...COND_TXT)
-    const cpLines = doc.splitTextToSize(cotizacion.condiciones_pago, contentW)
-    doc.text(cpLines, margin, y)
-    y += cpLines.length * 4.6 + 2
-  }
-
-  // Anticipo / saldo: etiqueta en negrita + monto en texto oscuro y legible.
-  const anticipo = totalUSD * 0.7
-  const saldo = totalUSD * 0.3
-  function lineaPago(label, usd, ars) {
+  // ── 7 y 8. CONDICIONES (texto editable por el usuario) ──
+  // Bloque de condiciones legible: título + texto en negro tenue, bien espaciado.
+  const COND_TXT = [45, 45, 45]
+  function bloqueCondiciones(titulo, texto) {
+    if (!texto || !texto.trim()) return
+    const lineas = doc.splitTextToSize(texto.trim(), contentW)
+    const alto = 7 + lineas.length * 4.8
+    if (pageH - y < alto + 8) y = nuevaPagina()
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(9)
     doc.setTextColor(...NEGRO)
-    doc.text(label, margin, y)
-    const w = doc.getTextWidth(label + '  ')
-    doc.setFont('helvetica', 'normal')
-    doc.setTextColor(...COND_TXT)
-    const val = `USD ${fUSD(usd)}${ars != null ? `      ≈  ${fARS(ars)}` : ''}`
-    doc.text(val, margin + w, y)
+    doc.setCharSpace(0.6)
+    doc.text(titulo, margin, y)
+    doc.setCharSpace(0)
     y += 6
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9.5)
+    doc.setTextColor(...COND_TXT)
+    doc.setLineHeightFactor(1.4)
+    doc.text(lineas, margin, y)
+    doc.setLineHeightFactor(1.15)
+    y += lineas.length * 4.8 + 6
   }
-  lineaPago('Anticipo (70%):', anticipo, totalARS != null ? anticipo * dolarVenta : null)
-  lineaPago('Saldo contra entrega (30%):', saldo, totalARS != null ? saldo * dolarVenta : null)
-  y += 3
 
-  // ── 8. CONDICIONES ADICIONALES ────────────────────
-  if (pageH - y < 30) y = nuevaPagina()
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8)
-  doc.setTextColor(...NEGRO)
-  doc.setCharSpace(0.5)
-  doc.text('CONDICIONES ADICIONALES', margin, y)
-  doc.setCharSpace(0)
-  y += 5
+  bloqueCondiciones('CONDICIONES DE PAGO', cotizacion.condiciones_pago)
 
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(7.5)
-  doc.setTextColor(85, 85, 85)
-  const adicionales = []
-  if (cotizacion.notas_internas) adicionales.push(cotizacion.notas_internas)
-  adicionales.push('• Precios sujetos a cambio sin previo aviso')
-  adicionales.push('• Plazo de producción: 30 días hábiles desde el pago del anticipo')
-  adicionales.push('• Tipo de cambio de referencia: dólar blue')
-  adicionales.push(`• Presupuesto válido por ${cotizacion.validez_dias || 0} días desde la emisión`)
-  doc.text(doc.splitTextToSize(adicionales.join('\n'), contentW), margin, y)
+  // Condiciones generales: usa el texto del usuario o, si está vacío, un estándar.
+  const generales =
+    cotizacion.condiciones_generales && cotizacion.condiciones_generales.trim()
+      ? cotizacion.condiciones_generales
+      : [
+          '• Precios sujetos a cambio sin previo aviso.',
+          '• Plazo de producción: 30 días hábiles desde el pago del anticipo.',
+          '• Tipo de cambio de referencia: dólar blue.',
+          `• Presupuesto válido por ${cotizacion.validez_dias || 0} días desde la emisión.`,
+        ].join('\n')
+  bloqueCondiciones('CONDICIONES GENERALES', generales)
 
   // ── 9. FOOTER en todas las páginas ────────────────
   const totalPages = doc.internal.getNumberOfPages()

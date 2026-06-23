@@ -23,6 +23,7 @@ import {
 } from '../lib/db'
 import { iniciales, limpiarWhatsapp } from '../lib/utils'
 import { SegmentoPills } from '../components/SegmentoPill'
+import { confirmDialog } from '../components/confirm'
 import ContactoModal from '../components/ContactoModal'
 import ImportModal from '../components/ImportModal'
 
@@ -106,7 +107,7 @@ export default function Contactos() {
 
   async function handleDelete(contacto) {
     const nombre = [contacto.nombre, contacto.apellido].filter(Boolean).join(' ')
-    if (!window.confirm(`¿Eliminar el contacto "${nombre}"?`)) return
+    if (!(await confirmDialog(`¿Eliminar el contacto "${nombre}"?`))) return
     const { error: err } = await deleteContacto(contacto.id)
     if (err) {
       setError('No se pudo eliminar: ' + err.message)
@@ -154,7 +155,7 @@ export default function Contactos() {
   async function bulkBorrar() {
     const ids = [...selected]
     if (!ids.length) return
-    if (!window.confirm(`¿Eliminar ${ids.length} contacto${ids.length === 1 ? '' : 's'}? Esta acción no se puede deshacer.`)) return
+    if (!(await confirmDialog(`¿Eliminar ${ids.length} contacto${ids.length === 1 ? '' : 's'}? Esta acción no se puede deshacer.`))) return
     setBulkBusy(true)
     setError('')
     let fallidos = 0

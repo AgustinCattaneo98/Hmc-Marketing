@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar'
+import { confirmDialog } from '../components/confirm'
 import {
   format,
   parse,
@@ -201,7 +202,7 @@ export default function CRMCalendario() {
     cargar()
   }
   async function eliminar(ev) {
-    if (!window.confirm(`¿Eliminar la actividad "${ev.title}"?`)) return
+    if (!(await confirmDialog(`¿Eliminar la actividad "${ev.title}"?`))) return
     if (ev.fuente === 'crm') await deleteActividadCRM(ev.raw.id)
     else await deleteActividad(ev.raw.id)
     setPanel(null)

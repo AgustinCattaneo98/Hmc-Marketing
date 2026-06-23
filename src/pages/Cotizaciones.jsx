@@ -27,6 +27,7 @@ import { formatUSD, formatARS, haceCuanto } from '../lib/dolar'
 import { ESTADOS_COT, ESTADOS_COT_LIST, diasRestantes } from '../lib/cotizaciones'
 import { iniciales } from '../lib/utils'
 import { generarCotizacionPDF } from '../lib/generarPDF'
+import { confirmDialog } from '../components/confirm'
 import AsignarOportunidadModal from '../components/AsignarOportunidadModal'
 
 function EstadoBadge({ estado }) {
@@ -94,7 +95,7 @@ export default function Cotizaciones() {
   }
 
   async function handleDelete(c) {
-    if (!window.confirm(`¿Eliminar la cotización "${c.numero}"?`)) return
+    if (!(await confirmDialog(`¿Eliminar la cotización "${c.numero}"?`))) return
     const { error: err } = await deleteCotizacion(c.id)
     if (err) return setError('No se pudo eliminar: ' + err.message)
     load()

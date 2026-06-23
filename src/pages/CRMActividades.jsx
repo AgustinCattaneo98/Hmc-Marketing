@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { confirmDialog } from '../components/confirm'
 import {
   DndContext,
   closestCorners,
@@ -174,7 +175,7 @@ export default function CRMActividades() {
     cargar()
   }
   async function eliminar(a) {
-    if (!window.confirm(`¿Eliminar la actividad "${a.titulo}"?`)) return
+    if (!(await confirmDialog(`¿Eliminar la actividad "${a.titulo}"?`))) return
     await deleteActividadCRM(a.id)
     cargar()
   }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { TbX } from 'react-icons/tb'
 import { getEmpresaSegmentos } from '../lib/db'
 import SegmentosInput from './SegmentosInput'
+import { confirmDialog } from './confirm'
 
 const EMPTY = {
   nombre: '',
@@ -38,7 +39,7 @@ export default function EmpresaModal({ empresa, onClose, onSave, onDelete }) {
   const [saving, setSaving] = useState(false)
 
   async function handleBorrar() {
-    if (!window.confirm(`¿Eliminar la empresa "${empresa.nombre}"? Esta acción no se puede deshacer.`)) return
+    if (!(await confirmDialog(`¿Eliminar la empresa "${empresa.nombre}"? Esta acción no se puede deshacer.`))) return
     setSaving(true)
     const err = await onDelete()
     setSaving(false)

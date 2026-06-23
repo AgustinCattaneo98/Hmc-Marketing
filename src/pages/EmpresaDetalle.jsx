@@ -24,6 +24,7 @@ import { iniciales, limpiarWhatsapp } from '../lib/utils'
 import { SegmentoPills } from '../components/SegmentoPill'
 import EmpresaModal from '../components/EmpresaModal'
 import ContactoModal from '../components/ContactoModal'
+import { confirmDialog } from '../components/confirm'
 
 const labelClass = 'text-xs uppercase tracking-wide text-hmc-muted'
 
@@ -130,7 +131,7 @@ export default function EmpresaDetalle() {
 
   async function handleDeleteContacto(contacto) {
     const nombre = [contacto.nombre, contacto.apellido].filter(Boolean).join(' ')
-    if (!window.confirm(`¿Eliminar el contacto "${nombre}"?`)) return
+    if (!(await confirmDialog(`¿Eliminar el contacto "${nombre}"?`))) return
     const { error: err } = await deleteContacto(contacto.id)
     if (err) {
       setError('No se pudo eliminar el contacto: ' + err.message)

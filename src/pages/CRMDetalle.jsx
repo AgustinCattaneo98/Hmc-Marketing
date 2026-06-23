@@ -37,6 +37,7 @@ import {
 import { ESTADOS_COT } from '../lib/cotizaciones'
 import { formatUSD, formatARS } from '../lib/dolar'
 import { generarCotizacionPDF } from '../lib/generarPDF'
+import { confirmDialog } from '../components/confirm'
 import OportunidadModal from '../components/OportunidadModal'
 import CotizacionDesdeCRMModal from '../components/CotizacionDesdeCRMModal'
 import ActividadCRMModal from '../components/ActividadCRMModal'
@@ -137,7 +138,7 @@ export default function CRMDetalle() {
     await loadActs()
   }
   async function deleteAct(act) {
-    if (!window.confirm(`¿Eliminar la actividad "${act.titulo}"?`)) return
+    if (!(await confirmDialog(`¿Eliminar la actividad "${act.titulo}"?`))) return
     await deleteActividadCRM(act.id)
     await loadActs()
   }

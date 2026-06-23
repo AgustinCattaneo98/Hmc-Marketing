@@ -10,7 +10,20 @@ export const STORAGE = {
   wallpaper: 'hmc_wallpaper',
   integraciones: 'hmc_integraciones',
   dashboardCover: 'hmc_dashboard_cover',
+  cotCondPago: 'hmc_cot_cond_pago',
+  cotCondGenerales: 'hmc_cot_cond_generales',
 }
+
+// Condiciones por defecto para nuevas cotizaciones (editable por cotización
+// y persistido como predeterminado cuando el usuario lo cambia).
+export const DEFAULT_COT_COND_PAGO =
+  '50% de anticipo para iniciar la producción y 50% restante contra entrega.\n' +
+  'Medios de pago: transferencia bancaria o efectivo.'
+
+export const DEFAULT_COT_COND_GENERALES =
+  '• Precios sujetos a cambio sin previo aviso.\n' +
+  '• Plazo de producción: 30 días hábiles desde el pago del anticipo.\n' +
+  '• Tipo de cambio de referencia: dólar blue.'
 
 // Eventos para refrescar componentes cuando cambian las preferencias.
 export const EVENT_LOGO = 'hmc_logo_changed'

@@ -28,6 +28,7 @@ import { iniciales, limpiarWhatsapp } from '../lib/utils'
 import EmpresaModal from '../components/EmpresaModal'
 import ImportModal from '../components/ImportModal'
 import { SegmentoPills } from '../components/SegmentoPill'
+import { confirmDialog } from '../components/confirm'
 
 export default function Empresas() {
   const navigate = useNavigate()
@@ -128,7 +129,7 @@ export default function Empresas() {
   }
 
   async function handleDelete(empresa) {
-    const ok = window.confirm(
+    const ok = await confirmDialog(
       `¿Eliminar la empresa "${empresa.nombre}"? Esta acción no se puede deshacer.`
     )
     if (!ok) return
@@ -193,7 +194,7 @@ export default function Empresas() {
   async function bulkBorrar() {
     const ids = [...selected]
     if (!ids.length) return
-    if (!window.confirm(`¿Eliminar ${ids.length} empresa${ids.length === 1 ? '' : 's'}? Esta acción no se puede deshacer.`)) return
+    if (!(await confirmDialog(`¿Eliminar ${ids.length} empresa${ids.length === 1 ? '' : 's'}? Esta acción no se puede deshacer.`))) return
     setBulkBusy(true)
     setError('')
     let fallidos = 0

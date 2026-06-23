@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { confirmDialog } from '../components/confirm'
 import {
   TbArrowLeft,
   TbPencil,
@@ -96,7 +97,7 @@ export default function ProductoDetalle() {
   }
 
   async function handleDeleteVar(v) {
-    if (!window.confirm(`¿Eliminar la variante "${v.nombre}"?`)) return
+    if (!(await confirmDialog(`¿Eliminar la variante "${v.nombre}"?`))) return
     await deleteVariante(v.id)
     await load()
   }

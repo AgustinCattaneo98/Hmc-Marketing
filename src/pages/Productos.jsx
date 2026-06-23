@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { confirmDialog } from '../components/confirm'
 import {
   TbPlus,
   TbSearch,
@@ -140,7 +141,7 @@ export default function Productos() {
     : 'Todos los productos'
 
   async function handleDeleteProducto(p) {
-    if (!window.confirm(`¿Eliminar el producto "${p.nombre}"?`)) return
+    if (!(await confirmDialog(`¿Eliminar el producto "${p.nombre}"?`))) return
     const { error: err } = await deleteProducto(p.id)
     if (err) return setError('No se pudo eliminar: ' + err.message)
     cargarProductos()
@@ -148,7 +149,7 @@ export default function Productos() {
   }
 
   async function handleDeleteCategoria(c) {
-    if (!window.confirm(`¿Eliminar la categoría "${c.nombre}"? Los productos quedarán sin categoría.`)) return
+    if (!(await confirmDialog(`¿Eliminar la categoría "${c.nombre}"? Los productos quedarán sin categoría.`))) return
     const { error: err } = await deleteCategoria(c.id)
     if (err) return setError('No se pudo eliminar la categoría: ' + err.message)
     if (categoriaActiva === c.id) setCategoriaActiva(null)

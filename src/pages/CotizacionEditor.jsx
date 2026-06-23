@@ -56,6 +56,15 @@ import { formatUSD, formatARS, haceCuanto, convertir } from '../lib/dolar'
 import { ESTADOS_COT, ESTADOS_COT_LIST, subtotalItem, calcularTotales } from '../lib/cotizaciones'
 import { iniciales } from '../lib/utils'
 import { generarCotizacionPDF } from '../lib/generarPDF'
+import { confirmDialog } from '../components/confirm'
+import {
+  STORAGE,
+  DEFAULT_COT_COND_PAGO,
+  DEFAULT_COT_COND_GENERALES,
+  loadStr,
+  saveStr,
+} from '../lib/settings'
+import { guardarConfig } from '../lib/config'
 
 const uid = () => crypto.randomUUID?.() ?? `i_${Date.now()}_${Math.random().toString(36).slice(2)}`
 const inputBase = 'rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted'
@@ -82,6 +91,8 @@ export default function CotizacionEditor() {
   const [validez, setValidez] = useState(7)
   const [monedaDisplay, setMonedaDisplay] = useState('ARS')
   const [notas, setNotas] = useState('')
+  const [condPago, setCondPago] = useState('')
+  const [condGenerales, setCondGenerales] = useState('')
   const [tc, setTc] = useState(0)
 
   const [catModal, setCatModal] = useState(false)
@@ -107,6 +118,14 @@ export default function CotizacionEditor() {
     setValidez(data.validez_dias ?? 7)
     setMonedaDisplay(data.moneda_display ?? 'ARS')
     setNotas(data.notas ?? '')
+    // Condiciones: si la cotización ya las tiene, se usan; si no, se prellena
+    // con el predeterminado guardado (o el default del sistema).
+    setCondPago(
+      data.condiciones_pago ?? (loadStr(STORAGE.cotCondPago) || DEFAULT_COT_COND_PAGO)
+    )
+    setCondGenerales(
+      data.condiciones_generales ?? (loadStr(STORAGE.cotCondGenerales) || DEFAULT_COT_COND_GENERALES)
+    )
     setTc(Number(data.dolar_venta) || 0)
     setItems(
       (data.cotizacion_items ?? [])
@@ -240,6 +259,8 @@ export default function CotizacionEditor() {
       validez_dias: Number(validez) || 7,
       moneda_display: monedaDisplay,
       notas: notas || null,
+      condiciones_pago: condPago || null,
+      condiciones_generales: condGenerales || null,
       dolar_venta: tc || null,
       subtotal_usd: totales.subtotalUsd,
       total_usd: totales.totalUsd,
@@ -247,6 +268,13 @@ export default function CotizacionEditor() {
     })
     setSaving(false)
     if (err) return setError('No se pudo guardar: ' + err.message)
+
+    // Las condiciones quedan como predeterminadas para las próximas cotizaciones.
+    saveStr(STORAGE.cotCondPago, condPago)
+    saveStr(STORAGE.cotCondGenerales, condGenerales)
+    guardarConfig(STORAGE.cotCondPago, condPago)
+    guardarConfig(STORAGE.cotCondGenerales, condGenerales)
+
     setMsg('Cambios guardados')
     await load()
   }
@@ -263,6 +291,8 @@ export default function CotizacionEditor() {
         ...cot,
         titulo,
         notas,
+        condiciones_pago: condPago,
+        condiciones_generales: condGenerales,
         validez_dias: validez,
         moneda_display: monedaDisplay,
         descuento_pct: descuento,
@@ -286,7 +316,7 @@ export default function CotizacionEditor() {
   }
 
   async function eliminar() {
-    if (!window.confirm('¿Eliminar esta cotización?')) return
+    if (!(await confirmDialog('¿Eliminar esta cotización?'))) return
     await deleteCotizacion(id)
     navigate('/cotizaciones')
   }
@@ -395,8 +425,22 @@ export default function CotizacionEditor() {
 
           {/* Notas */}
           <section className="rounded-lg border border-hmc-border bg-hmc-gray2 p-4">
-            <h2 className="mb-2 text-xs uppercase tracking-wide text-hmc-muted">Notas / condiciones</h2>
-            <textarea rows={4} value={notas} onChange={(e) => setNotas(e.target.value)} className={`${inputBase} w-full resize-none`} placeholder={'Ej: Precios sujetos a cambio sin previo aviso.\nEntrega estimada 30 días hábiles.\n50% anticipo, 50% contra entrega.'} />
+            <h2 className="mb-2 text-xs uppercase tracking-wide text-hmc-muted">Notas</h2>
+            <textarea rows={6} value={notas} onChange={(e) => setNotas(e.target.value)} className={`${inputBase} w-full resize-y min-h-[120px]`} placeholder={'Notas internas o aclaraciones para el cliente…'} />
+          </section>
+
+          {/* Condiciones de pago */}
+          <section className="rounded-lg border border-hmc-border bg-hmc-gray2 p-4">
+            <h2 className="mb-1 text-xs uppercase tracking-wide text-hmc-muted">Condiciones de pago</h2>
+            <p className="mb-2 text-xs text-hmc-muted/70">Se guarda como predeterminado para próximas cotizaciones. Editable acá.</p>
+            <textarea rows={4} value={condPago} onChange={(e) => setCondPago(e.target.value)} className={`${inputBase} w-full resize-y min-h-[90px]`} placeholder={'Ej: 50% de anticipo y 50% contra entrega. Transferencia o efectivo.'} />
+          </section>
+
+          {/* Condiciones generales */}
+          <section className="rounded-lg border border-hmc-border bg-hmc-gray2 p-4">
+            <h2 className="mb-1 text-xs uppercase tracking-wide text-hmc-muted">Condiciones generales</h2>
+            <p className="mb-2 text-xs text-hmc-muted/70">Se guarda como predeterminado para próximas cotizaciones. Editable acá.</p>
+            <textarea rows={4} value={condGenerales} onChange={(e) => setCondGenerales(e.target.value)} className={`${inputBase} w-full resize-y min-h-[90px]`} placeholder={'Ej: Precios sujetos a cambio. Plazo de producción 30 días hábiles.'} />
           </section>
         </div>
 

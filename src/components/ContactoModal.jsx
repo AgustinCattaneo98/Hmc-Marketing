@@ -3,6 +3,7 @@ import { TbX, TbCamera } from 'react-icons/tb'
 import { supabase } from '../lib/supabase'
 import { getEmpresas } from '../lib/db'
 import { iniciales } from '../lib/utils'
+import { confirmDialog } from './confirm'
 
 const EMPTY = {
   nombre: '',
@@ -101,7 +102,7 @@ export default function ContactoModal({
 
   async function handleBorrar() {
     const nombre = [contacto.nombre, contacto.apellido].filter(Boolean).join(' ')
-    if (!window.confirm(`¿Eliminar el contacto "${nombre}"? Esta acción no se puede deshacer.`)) return
+    if (!(await confirmDialog(`¿Eliminar el contacto "${nombre}"? Esta acción no se puede deshacer.`))) return
     setSaving(true)
     const err = await onDelete()
     setSaving(false)

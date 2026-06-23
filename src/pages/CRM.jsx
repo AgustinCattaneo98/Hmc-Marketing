@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { confirmDialog } from '../components/confirm'
 import {
   DndContext,
   DragOverlay,
@@ -130,7 +131,7 @@ export default function CRM() {
   }
 
   async function handleDelete(op) {
-    if (!window.confirm(`¿Eliminar la oportunidad "${op.titulo}"?`)) return
+    if (!(await confirmDialog(`¿Eliminar la oportunidad "${op.titulo}"?`))) return
     const { error: err } = await deleteOportunidad(op.id)
     if (err) {
       setError('No se pudo eliminar: ' + err.message)
