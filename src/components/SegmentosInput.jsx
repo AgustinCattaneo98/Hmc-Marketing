@@ -26,13 +26,19 @@ export default function SegmentosInput({ value = [], onChange, placeholder = 'Bu
     }
   }, [])
 
-  // Cierra el dropdown al hacer click fuera.
+  // Cierra el dropdown al hacer click fuera del componente.
+  // Se usa fase de captura (true) para que funcione aunque un modal contenedor
+  // haga stopPropagation del mousedown (ej. EmpresaModal). El tag seleccionado
+  // se mantiene; solo se cierra el dropdown y se limpia el texto de búsqueda.
   useEffect(() => {
-    function onDocClick(e) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false)
+    function handleClickOutside(e) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) {
+        setOpen(false)
+        setTexto('')
+      }
     }
-    document.addEventListener('mousedown', onDocClick)
-    return () => document.removeEventListener('mousedown', onDocClick)
+    document.addEventListener('mousedown', handleClickOutside, true)
+    return () => document.removeEventListener('mousedown', handleClickOutside, true)
   }, [])
 
   const q = texto.trim().toLowerCase()
