@@ -9,6 +9,10 @@ import {
   TbMail,
   TbBrandWhatsapp,
   TbUsers,
+  TbX,
+  TbSearch,
+  TbUserPlus,
+  TbUserSearch,
 } from 'react-icons/tb'
 import {
   getEmpresa,
@@ -41,6 +45,12 @@ export default function EmpresaDetalle() {
   const [empresaModal, setEmpresaModal] = useState(false)
   const [contactoModal, setContactoModal] = useState(false)
   const [editingContacto, setEditingContacto] = useState(null)
+  // Flujo "Agregar contacto": null | 'menu' | 'buscar'
+  const [flujoAgregar, setFlujoAgregar] = useState(null)
+  const [existentes, setExistentes] = useState([])
+  const [buscarQuery, setBuscarQuery] = useState('')
+  const [cargandoExistentes, setCargandoExistentes] = useState(false)
+  const [vinculandoId, setVinculandoId] = useState(null)
 
   const logoRef = useRef(null)
 
@@ -149,6 +159,55 @@ export default function EmpresaDetalle() {
     setEditingContacto(contacto)
     setContactoModal(true)
   }
+
+  // --- Flujo "Agregar contacto" (elegir crear nuevo o vincular existente) ---
+  function abrirAgregarContacto() {
+    setFlujoAgregar('menu')
+  }
+
+  function cerrarFlujo() {
+    setFlujoAgregar(null)
+    setBuscarQuery('')
+    setExistentes([])
+  }
+
+  function elegirCrearNuevo() {
+    setFlujoAgregar(null)
+    openCreateContacto()
+  }
+
+  async function elegirExistente() {
+    setFlujoAgregar('buscar')
+    setCargandoExistentes(true)
+    const { data } = await supabase
+      .from('contactos')
+      .select('id, nombre, apellido, email, empresa_id, foto_url, cargo')
+      .order('nombre', { ascending: true })
+    setExistentes(data ?? [])
+    setCargandoExistentes(false)
+  }
+
+  async function vincularExistente(c) {
+    setVinculandoId(c.id)
+    const { error: err } = await updateContacto(c.id, { empresa_id: empresa.id })
+    setVinculandoId(null)
+    if (err) {
+      setError('No se pudo vincular el contacto: ' + err.message)
+      return
+    }
+    cerrarFlujo()
+    await load()
+  }
+
+  // Contactos existentes para vincular: excluye los ya vinculados a esta empresa
+  // y filtra por nombre / apellido / email en tiempo real.
+  const qExistentes = buscarQuery.trim().toLowerCase()
+  const existentesFiltrados = existentes.filter(
+    (c) =>
+      c.empresa_id !== empresa?.id &&
+      (!qExistentes ||
+        `${c.nombre ?? ''} ${c.apellido ?? ''} ${c.email ?? ''}`.toLowerCase().includes(qExistentes))
+  )
 
   if (loading) {
     return (
@@ -276,7 +335,7 @@ export default function EmpresaDetalle() {
           </h2>
           <button
             type="button"
-            onClick={openCreateContacto}
+            onClick={abrirAgregarContacto}
             className="inline-flex items-center gap-2 rounded-md border border-hmc-border px-3 py-1.5 text-sm text-hmc-white transition-colors hover:bg-hmc-gray3"
           >
             <TbPlus size={16} />
@@ -369,6 +428,122 @@ export default function EmpresaDetalle() {
           </div>
         )}
       </section>
+
+      {/* Flujo "Agregar contacto": elegir crear nuevo o vincular existente */}
+      {flujoAgregar && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
+          onMouseDown={cerrarFlujo}
+        >
+          <div
+            className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-lg border border-hmc-border bg-hmc-gray2 shadow-xl"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-hmc-border px-6 py-4">
+              <h2 className="text-lg font-semibold text-hmc-white">Agregar contacto</h2>
+              <button
+                type="button"
+                onClick={cerrarFlujo}
+                className="text-hmc-muted transition-colors hover:text-hmc-white"
+                aria-label="Cerrar"
+              >
+                <TbX size={20} />
+              </button>
+            </div>
+
+            {flujoAgregar === 'menu' && (
+              <div className="grid grid-cols-1 gap-3 p-6 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={elegirCrearNuevo}
+                  className="flex flex-col items-center gap-2 rounded-lg border border-hmc-border bg-hmc-gray p-6 text-center transition-colors hover:bg-hmc-gray3/50"
+                >
+                  <TbUserPlus size={26} className="text-hmc-white" />
+                  <span className="text-sm font-medium text-hmc-white">Crear nuevo contacto</span>
+                  <span className="text-xs text-hmc-muted">Cargar una persona nueva</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={elegirExistente}
+                  className="flex flex-col items-center gap-2 rounded-lg border border-hmc-border bg-hmc-gray p-6 text-center transition-colors hover:bg-hmc-gray3/50"
+                >
+                  <TbUserSearch size={26} className="text-hmc-white" />
+                  <span className="text-sm font-medium text-hmc-white">Agregar existente</span>
+                  <span className="text-xs text-hmc-muted">Vincular un contacto ya cargado</span>
+                </button>
+              </div>
+            )}
+
+            {flujoAgregar === 'buscar' && (
+              <div className="p-6">
+                <button
+                  type="button"
+                  onClick={() => setFlujoAgregar('menu')}
+                  className="mb-3 inline-flex items-center gap-1.5 text-sm text-hmc-muted transition-colors hover:text-hmc-white"
+                >
+                  <TbArrowLeft size={16} /> Volver
+                </button>
+                <div className="relative mb-4">
+                  <TbSearch
+                    size={18}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-hmc-muted"
+                  />
+                  <input
+                    type="text"
+                    autoFocus
+                    placeholder="Buscar por nombre, apellido o email…"
+                    value={buscarQuery}
+                    onChange={(e) => setBuscarQuery(e.target.value)}
+                    className="w-full rounded-md border border-hmc-border bg-hmc-gray2 py-2 pl-10 pr-3 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white placeholder:text-hmc-muted"
+                  />
+                </div>
+                {cargandoExistentes ? (
+                  <p className="py-6 text-center text-sm text-hmc-muted">Cargando…</p>
+                ) : existentesFiltrados.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-hmc-muted">
+                    {buscarQuery ? 'Sin resultados.' : 'No hay otros contactos para vincular.'}
+                  </p>
+                ) : (
+                  <div className="flex max-h-[50vh] flex-col gap-2 overflow-y-auto">
+                    {existentesFiltrados.map((c) => (
+                      <div
+                        key={c.id}
+                        className="flex items-center gap-3 rounded-md border border-hmc-border bg-hmc-gray p-3"
+                      >
+                        {c.foto_url ? (
+                          <img
+                            src={c.foto_url}
+                            alt=""
+                            className="h-9 w-9 shrink-0 rounded-full border border-hmc-border object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-hmc-border bg-hmc-gray3 text-xs font-semibold text-hmc-white">
+                            {iniciales(c.nombre, c.apellido)}
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm text-hmc-white">
+                            {[c.nombre, c.apellido].filter(Boolean).join(' ')}
+                          </p>
+                          {c.email && <p className="truncate text-xs text-hmc-muted">{c.email}</p>}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => vincularExistente(c)}
+                          disabled={vinculandoId === c.id}
+                          className="shrink-0 rounded-md bg-hmc-white px-3 py-1.5 text-sm font-semibold text-hmc-black transition-opacity hover:opacity-90 disabled:opacity-60"
+                        >
+                          {vinculandoId === c.id ? '…' : 'Seleccionar'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {empresaModal && (
         <EmpresaModal
