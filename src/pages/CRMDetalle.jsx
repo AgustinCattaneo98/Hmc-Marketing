@@ -353,12 +353,12 @@ export default function CRMDetalle() {
           <div className="sm:col-span-2">
             <p className={labelClass}>Notas</p>
             <textarea
-              rows={2}
-              className={`${inputClass} mt-1 resize-none`}
+              rows={7}
+              className={`${inputClass} mt-1 min-h-[150px] resize-y`}
               value={notasTmp}
               onChange={(e) => setNotasTmp(e.target.value)}
               onBlur={() => notasTmp !== (op.notas ?? '') && guardarCampo('notas', notasTmp || null)}
-              placeholder="Agregar notas…"
+              placeholder="Agregar notas de seguimiento…"
             />
           </div>
         </div>
