@@ -230,102 +230,140 @@ export async function generarCotizacionPDF(cotizacion, dolarVenta) {
   const subtotalBase = Number(cotizacion.subtotal_usd || totalUSD)
   const totalARS = mostrarARS ? totalUSD * dolarVenta : null
 
-  if (pageH - y < 60) y = nuevaPagina()
+  if (pageH - y < 64) y = nuevaPagina()
 
-  const boxW = 90
+  const boxW = 92
   const boxX = pageW - margin - boxW
-  const padX = 6
-  const boxH = 28 + (descuentoGlobal > 0 ? 6 : 0) + (totalARS ? 8 : 0)
+  const padX = 7
+  const labX = boxX + padX
+  const valX = boxX + boxW - padX // borde derecho de los valores
+  const hayDesc = descuentoGlobal > 0
+
+  // Alto calculado según las filas reales (evita que el ARS se salga).
+  const boxH = 26 + (hayDesc ? 6 : 0) + (totalARS ? 6 : 0)
 
   doc.setFillColor(...GRIS_CLARO)
   doc.rect(boxX, y, boxW, boxH, 'F')
-  doc.setDrawColor(205, 205, 198)
-  doc.setLineWidth(0.2)
+  doc.setDrawColor(200, 200, 193)
+  doc.setLineWidth(0.3)
   doc.rect(boxX, y, boxW, boxH, 'S')
 
-  let ry = y + 7
+  let ry = y + 9
+
+  // Subtotal (en USD)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
   doc.setTextColor(...GRIS)
-  doc.text('Subtotal:', boxX + padX, ry)
+  doc.text('Subtotal', labX, ry)
   doc.setTextColor(...GRIS_TXT)
-  doc.text(`USD ${fUSD(subtotalBase)}`, boxX + boxW - padX, ry, { align: 'right' })
+  doc.text(`USD ${fUSD(subtotalBase)}`, valX, ry, { align: 'right' })
   ry += 6
 
-  if (descuentoGlobal > 0) {
-    doc.setFontSize(9)
+  if (hayDesc) {
     doc.setTextColor(...GRIS)
-    doc.text(`Descuento ${descuentoGlobal}%:`, boxX + padX, ry)
-    doc.text(`- USD ${fUSD((subtotalBase * descuentoGlobal) / 100)}`, boxX + boxW - padX, ry, { align: 'right' })
+    doc.text(`Descuento ${descuentoGlobal}%`, labX, ry)
+    doc.setTextColor(...GRIS_TXT)
+    doc.text(`− USD ${fUSD((subtotalBase * descuentoGlobal) / 100)}`, valX, ry, { align: 'right' })
     ry += 6
   }
 
-  doc.setDrawColor(200, 200, 193)
-  doc.setLineWidth(0.2)
-  doc.line(boxX + padX, ry - 2, boxX + boxW - padX, ry - 2)
-  ry += 2
-
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(12)
-  doc.setTextColor(...NEGRO)
-  doc.text('TOTAL USD:', boxX + padX, ry + 2)
-  doc.text(`USD ${fUSD(totalUSD)}`, boxX + boxW - padX, ry + 2, { align: 'right' })
-  ry += 8
+  // Separador
+  doc.setDrawColor(190, 190, 183)
+  doc.setLineWidth(0.3)
+  doc.line(labX, ry - 1, valX, ry - 1)
+  ry += 5
 
   if (totalARS) {
-    doc.setFont('helvetica', 'normal')
+    // TOTAL en ARS (principal, arriba). Achica la fuente si no entra.
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(8)
     doc.setTextColor(...GRIS)
-    const arsTxt = `≈ ARS: ${fARS(totalARS)}`
+    doc.setCharSpace(0.5)
+    doc.text('TOTAL', labX, ry)
+    doc.setCharSpace(0)
+    const arsTxt = fARS(totalARS)
+    let arsFs = 15
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...NEGRO)
+    doc.setFontSize(arsFs)
+    const maxValW = boxW - padX * 2 - 16
+    while (doc.getTextWidth(arsTxt) > maxValW && arsFs > 9) {
+      arsFs -= 1
+      doc.setFontSize(arsFs)
+    }
+    doc.text(arsTxt, valX, ry + 0.5, { align: 'right' })
+    ry += 6
+    // Equivalente en USD (secundario, abajo)
+    doc.setFont('helvetica', 'normal')
     doc.setFontSize(9)
-    if (doc.getTextWidth(arsTxt) > boxW - padX * 2) doc.setFontSize(7)
-    const arsLines = doc.splitTextToSize(arsTxt, boxW - padX * 2)
-    doc.text(arsLines, boxX + boxW - padX, ry, { align: 'right' })
+    doc.setTextColor(...GRIS)
+    doc.text('en dólares', labX, ry)
+    doc.setTextColor(...GRIS_TXT)
+    doc.text(`USD ${fUSD(totalUSD)}`, valX, ry, { align: 'right' })
+  } else {
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(8)
+    doc.setTextColor(...GRIS)
+    doc.setCharSpace(0.5)
+    doc.text('TOTAL', labX, ry)
+    doc.setCharSpace(0)
+    doc.setFontSize(14)
+    doc.setTextColor(...NEGRO)
+    doc.text(`USD ${fUSD(totalUSD)}`, valX, ry + 0.5, { align: 'right' })
   }
 
-  // Tipo de cambio fuera del recuadro
+  // Tipo de cambio, fuera del recuadro
   let belowY = y + boxH + 4
   if (dolarVenta) {
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(7)
     doc.setTextColor(...GRIS)
-    doc.text(`(dólar blue: $${dolarVenta})`, boxX + boxW - padX, belowY, { align: 'right' })
+    doc.text(`(dólar blue: $${dolarVenta})`, valX, belowY, { align: 'right' })
     belowY += 4
   }
 
   y = belowY + 4
 
   // ── 7. CONDICIONES DE PAGO ────────────────────────
-  if (pageH - y < 36) y = nuevaPagina()
+  if (pageH - y < 42) y = nuevaPagina()
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8)
+  doc.setFontSize(9)
   doc.setTextColor(...NEGRO)
-  doc.setCharSpace(0.5)
+  doc.setCharSpace(0.6)
   doc.text('CONDICIONES DE PAGO', margin, y)
   doc.setCharSpace(0)
-  y += 5
+  y += 6.5
 
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8)
-  doc.setTextColor(...GRIS)
+  const COND_TXT = [55, 55, 55]
+
+  // Texto libre de condiciones, si la cotización lo trae.
   if (cotizacion.condiciones_pago) {
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    doc.setTextColor(...COND_TXT)
     const cpLines = doc.splitTextToSize(cotizacion.condiciones_pago, contentW)
     doc.text(cpLines, margin, y)
-    y += cpLines.length * 4 + 1
+    y += cpLines.length * 4.6 + 2
   }
+
+  // Anticipo / saldo: etiqueta en negrita + monto en texto oscuro y legible.
   const anticipo = totalUSD * 0.7
   const saldo = totalUSD * 0.3
-  doc.text(
-    `Anticipo (70%): USD ${fUSD(anticipo)}${mostrarARS ? `  ·  ≈ ${fARS(anticipo * dolarVenta)}` : ''}`,
-    margin,
-    y
-  )
-  y += 4
-  doc.text(
-    `Saldo contra entrega (30%): USD ${fUSD(saldo)}${mostrarARS ? `  ·  ≈ ${fARS(saldo * dolarVenta)}` : ''}`,
-    margin,
-    y
-  )
-  y += 8
+  function lineaPago(label, usd, ars) {
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9)
+    doc.setTextColor(...NEGRO)
+    doc.text(label, margin, y)
+    const w = doc.getTextWidth(label + '  ')
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(...COND_TXT)
+    const val = `USD ${fUSD(usd)}${ars != null ? `      ≈  ${fARS(ars)}` : ''}`
+    doc.text(val, margin + w, y)
+    y += 6
+  }
+  lineaPago('Anticipo (70%):', anticipo, totalARS != null ? anticipo * dolarVenta : null)
+  lineaPago('Saldo contra entrega (30%):', saldo, totalARS != null ? saldo * dolarVenta : null)
+  y += 3
 
   // ── 8. CONDICIONES ADICIONALES ────────────────────
   if (pageH - y < 30) y = nuevaPagina()
@@ -338,8 +376,8 @@ export async function generarCotizacionPDF(cotizacion, dolarVenta) {
   y += 5
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(7)
-  doc.setTextColor(...GRIS)
+  doc.setFontSize(7.5)
+  doc.setTextColor(85, 85, 85)
   const adicionales = []
   if (cotizacion.notas_internas) adicionales.push(cotizacion.notas_internas)
   adicionales.push('• Precios sujetos a cambio sin previo aviso')
