@@ -1,435 +1,354 @@
-// Detecta el formato de jsPDF a partir de un data URL.
-function formatoDeDataURL(b64) {
-  const m = /^data:image\/(\w+)/i.exec(b64 || '')
-  const t = (m?.[1] || '').toLowerCase()
-  if (t.includes('png')) return 'PNG'
-  if (t.includes('webp')) return 'WEBP'
-  return 'JPEG'
-}
-
+// Genera el PDF de una cotización con identidad HMC: minimalista, blanco y
+// negro, tipografía clara y bien espaciado. Layout basado en autoTable.
+// Firma estable: generarCotizacionPDF(cotizacion, dolarVenta)
 export async function generarCotizacionPDF(cotizacion, dolarVenta) {
   const { jsPDF } = await import('jspdf')
+  const autoTable = (await import('jspdf-autotable')).default
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
 
-  // Configuración de marca desde localStorage
-  let empresa = {}
-  let emailConfig = {}
+  // Configuración de marca desde localStorage (para el footer).
+  let empresaCfg = {}
   try {
-    empresa = JSON.parse(localStorage.getItem('hmc_empresa') || '{}')
+    empresaCfg = JSON.parse(localStorage.getItem('hmc_empresa') || '{}')
   } catch {
-    empresa = {}
-  }
-  try {
-    emailConfig = JSON.parse(localStorage.getItem('hmc_email_config') || '{}')
-  } catch {
-    emailConfig = {}
+    empresaCfg = {}
   }
 
   const pageW = doc.internal.pageSize.getWidth()
   const pageH = doc.internal.pageSize.getHeight()
   const margin = 14
+  const contentW = pageW - margin * 2
 
-  // Carga una imagen (URL) y la convierte a data URL base64.
-  async function loadImageAsBase64(url) {
-    try {
-      const res = await fetch(url)
-      const blob = await res.blob()
-      return await new Promise((resolve) => {
-        const reader = new FileReader()
-        reader.onloadend = () => resolve(reader.result)
-        reader.onerror = () => resolve(null)
-        reader.readAsDataURL(blob)
-      })
-    } catch {
-      return null
-    }
-  }
+  // ── Paleta (sin colores de acento) ───────────────
+  const NEGRO = [10, 10, 10]
+  const BLANCO = [255, 255, 255]
+  const GRIS = [100, 100, 100]
+  const GRIS_CLARO = [240, 240, 234]
+  const GRIS_TXT = [40, 40, 40]
+  const GRIS_LUZ = [180, 180, 180] // gris claro legible sobre negro
 
-  function addImageSafe(b64, x, y, w, h) {
-    try {
-      doc.addImage(b64, formatoDeDataURL(b64), x, y, w, h, undefined, 'FAST')
-      return true
-    } catch {
-      return false
-    }
-  }
+  const FOOTER_H = 12
 
-  // Footer (mismo en todas las páginas)
+  // ── Formateadores ────────────────────────────────
+  const fUSD = (n) =>
+    Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const fARS = (n) => '$ ' + Math.round(Number(n || 0)).toLocaleString('es-AR')
+
+  const fecha = (d) =>
+    new Date(d).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+
+  // ── Footer (se dibuja en todas las páginas al final) ──
   function addFooter(pageNum, totalPages) {
-    const y = pageH - 8
-    doc.setFillColor(10, 10, 10)
-    doc.rect(0, pageH - 14, pageW, 14, 'F')
-    doc.setFontSize(6.5)
-    doc.setTextColor(120, 120, 120)
+    const cy = pageH - FOOTER_H / 2 + 1.5
+    doc.setFillColor(...NEGRO)
+    doc.rect(0, pageH - FOOTER_H, pageW, FOOTER_H, 'F')
     doc.setFont('helvetica', 'normal')
-    const nombreMarca = empresa.nombre || 'HMC — Handmade Cycles'
-    const emailMarca = empresa.email || 'hmcbicicletas@gmail.com'
-    const igMarca = empresa.instagram || '@handmadecycles'
-    doc.text(`${nombreMarca} · Buenos Aires, Argentina`, margin, y)
-    doc.text(emailMarca, pageW / 2, y, { align: 'center' })
-    doc.setTextColor(90, 90, 90)
-    doc.text(`${igMarca}  ·  Pág. ${pageNum} de ${totalPages}`, pageW - margin, y, { align: 'right' })
+    doc.setFontSize(7)
+    doc.setTextColor(...GRIS_LUZ)
+    const nombre = empresaCfg.nombre || 'HMC — Handmade Cycles'
+    const email = empresaCfg.email || 'hmcbicicletas@gmail.com'
+    const ig = empresaCfg.instagram || '@handmadecycles'
+    doc.text(`${nombre} · Buenos Aires · ${email} · ${ig}`, pageW / 2, cy, { align: 'center' })
+    doc.setTextColor(150, 150, 150)
+    doc.text(`Pág. ${pageNum} de ${totalPages}`, pageW - margin, cy, { align: 'right' })
   }
 
-  // ── HEADER ──────────────────────────────────────
-  let y = 0
-  doc.setFillColor(10, 10, 10)
-  doc.rect(0, 0, pageW, 52, 'F')
+  // Salto de página manual reutilizable (deja espacio para el footer).
+  function nuevaPagina() {
+    doc.addPage()
+    return margin + 4
+  }
 
-  doc.setTextColor(240, 240, 234)
-  doc.setFontSize(30)
+  // ── 1. HEADER (negro) ─────────────────────────────
+  const HEADER_H = 30
+  doc.setFillColor(...NEGRO)
+  doc.rect(0, 0, pageW, HEADER_H, 'F')
+
+  doc.setTextColor(...BLANCO)
   doc.setFont('helvetica', 'bolditalic')
-  doc.text('hmc', margin, 22)
+  doc.setFontSize(32)
+  doc.text('hmc', margin, 19)
 
-  doc.setFontSize(7)
   doc.setFont('helvetica', 'normal')
-  doc.setTextColor(136, 136, 136)
-  doc.setCharSpace(2)
-  doc.text('HANDMADE CYCLES', margin, 30)
+  doc.setFontSize(7)
+  doc.setTextColor(...GRIS_LUZ)
+  doc.setCharSpace(1.2)
+  doc.text('HANDMADE CYCLES · BUENOS AIRES', margin, 25)
   doc.setCharSpace(0)
-  doc.setFontSize(6)
-  doc.setTextColor(100, 100, 100)
-  doc.text('Buenos Aires, Argentina', margin, 37)
 
+  doc.setFontSize(9)
+  doc.setTextColor(...BLANCO)
+  doc.text(cotizacion.numero || '', pageW - margin, 12, { align: 'right' })
+  doc.setFontSize(7)
+  doc.setTextColor(...GRIS_LUZ)
+  doc.setCharSpace(1)
+  doc.text('PRESUPUESTO', pageW - margin, 18, { align: 'right' })
+  doc.setCharSpace(0)
+  doc.text(fecha(cotizacion.created_at), pageW - margin, 23, { align: 'right' })
+
+  // ── 2. FRANJA DELGADA (#F0F0EA) ───────────────────
+  doc.setFillColor(...GRIS_CLARO)
+  doc.rect(0, HEADER_H, pageW, 3, 'F')
+
+  // ── 3. BLOQUE CLIENTE ─────────────────────────────
   const clienteNombre =
     cotizacion.empresa?.nombre ||
     `${cotizacion.contacto?.nombre || ''} ${cotizacion.contacto?.apellido || ''}`.trim() ||
     cotizacion.cliente_nombre ||
+    '—'
+  const clienteContacto =
+    cotizacion.empresa?.email ||
+    cotizacion.empresa?.telefono ||
+    cotizacion.contacto?.email ||
+    cotizacion.cliente_email ||
     ''
-  const clienteEmail = cotizacion.empresa?.email || cotizacion.contacto?.email || cotizacion.cliente_email || ''
 
-  let logoClienteCargado = false
-  if (cotizacion.empresa?.logo_url) {
-    const logoBase64 = await loadImageAsBase64(cotizacion.empresa.logo_url)
-    if (logoBase64 && addImageSafe(logoBase64, pageW - 50, 8, 36, 20)) {
-      logoClienteCargado = true
-      if (clienteNombre) {
-        doc.setFontSize(8)
-        doc.setTextColor(180, 180, 180)
-        doc.setFont('helvetica', 'normal')
-        doc.text(clienteNombre, pageW - margin, 34, { align: 'right' })
-      }
-    }
-  }
-  if (!logoClienteCargado && clienteNombre) {
-    doc.setFontSize(14)
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(240, 240, 234)
-    doc.text(clienteNombre, pageW - margin, 22, { align: 'right' })
-    if (clienteEmail) {
-      doc.setFontSize(8)
-      doc.setFont('helvetica', 'normal')
-      doc.setTextColor(136, 136, 136)
-      doc.text(clienteEmail, pageW - margin, 30, { align: 'right' })
-    }
+  let y = HEADER_H + 3 + 11
+
+  // Columna izquierda
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(7)
+  doc.setTextColor(...GRIS)
+  doc.setCharSpace(1)
+  doc.text('PARA:', margin, y)
+  doc.setCharSpace(0)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(12)
+  doc.setTextColor(...NEGRO)
+  doc.text(clienteNombre, margin, y + 7)
+  if (clienteContacto) {
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8)
+    doc.setTextColor(...GRIS)
+    doc.text(clienteContacto, margin, y + 12)
   }
 
-  y = 52
-
-  // ── BLOQUE INFO COTIZACIÓN ───────────────────────
-  doc.setFillColor(17, 17, 17)
-  doc.rect(0, y, pageW, 22, 'F')
-
-  doc.setFontSize(7)
+  // Columna derecha
   doc.setFont('helvetica', 'normal')
-  doc.setTextColor(136, 136, 136)
-  doc.setCharSpace(1.5)
-  doc.text('PRESUPUESTO', margin, y + 7)
-  doc.setCharSpace(0)
-
-  doc.setFontSize(11)
-  doc.setFont('helvetica', 'bold')
-  doc.setTextColor(240, 240, 234)
-  doc.text(cotizacion.numero || '', margin, y + 14)
-
-  doc.setFontSize(8)
-  doc.setFont('helvetica', 'normal')
-  doc.setTextColor(136, 136, 136)
-  const fechaCreacion = new Date(cotizacion.created_at).toLocaleDateString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
-  doc.text(fechaCreacion, margin, y + 20)
-
   doc.setFontSize(7)
-  doc.setTextColor(136, 136, 136)
-  doc.setCharSpace(1.5)
-  doc.text('VÁLIDO POR', pageW - margin, y + 7, { align: 'right' })
+  doc.setTextColor(...GRIS)
+  doc.setCharSpace(1)
+  doc.text('VÁLIDO POR:', pageW - margin, y, { align: 'right' })
   doc.setCharSpace(0)
-
-  doc.setFontSize(11)
   doc.setFont('helvetica', 'bold')
-  doc.setTextColor(240, 240, 234)
-  doc.text(`${cotizacion.validez_dias} días`, pageW - margin, y + 14, { align: 'right' })
-
-  const fechaVence = new Date(
+  doc.setFontSize(11)
+  doc.setTextColor(...NEGRO)
+  doc.text(`${cotizacion.validez_dias || 0} días`, pageW - margin, y + 7, { align: 'right' })
+  const fechaVence = fecha(
     new Date(cotizacion.created_at).getTime() + (cotizacion.validez_dias || 0) * 86400000
   )
-  doc.setFontSize(8)
   doc.setFont('helvetica', 'normal')
-  doc.setTextColor(136, 136, 136)
-  doc.text(`Vence: ${fechaVence.toLocaleDateString('es-AR')}`, pageW - margin, y + 20, { align: 'right' })
+  doc.setFontSize(8)
+  doc.setTextColor(...GRIS)
+  doc.text(`Vence: ${fechaVence}`, pageW - margin, y + 12, { align: 'right' })
 
-  y += 22
+  y += 20
 
-  doc.setDrawColor(51, 51, 51)
-  doc.setLineWidth(0.3)
-  doc.line(0, y, pageW, y)
-
-  // ── TÍTULO ───────────────────────────────────────
-  doc.setFillColor(240, 240, 234)
-  doc.rect(0, y, pageW, 18, 'F')
-  doc.setFontSize(14)
+  // ── 4. TÍTULO ─────────────────────────────────────
+  doc.setDrawColor(...NEGRO)
+  doc.setLineWidth(0.4)
+  doc.line(margin, y, pageW - margin, y)
+  y += 7
   doc.setFont('helvetica', 'bold')
-  doc.setTextColor(10, 10, 10)
-  doc.text(cotizacion.titulo || 'Cotización', margin, y + 12)
-  y += 18 + 6
+  doc.setFontSize(13)
+  doc.setTextColor(...NEGRO)
+  doc.text(cotizacion.titulo || 'Cotización', margin, y)
+  y += 5
+  if (cotizacion.notas) {
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8)
+    doc.setTextColor(...GRIS)
+    const notasLines = doc.splitTextToSize(cotizacion.notas, contentW).slice(0, 2)
+    doc.text(notasLines, margin, y + 1)
+    y += notasLines.length * 4 + 1
+  }
+  y += 5
 
-  // ── ITEMS ────────────────────────────────────────
-  const mostrarARS = ['ARS', 'AMBAS'].includes(cotizacion.moneda_display || 'ARS')
+  // ── 5. TABLA DE ÍTEMS ─────────────────────────────
+  const mostrarARS =
+    ['ARS', 'AMBAS'].includes(cotizacion.moneda_display || 'ARS') && !!dolarVenta
   const items = cotizacion.cotizacion_items || []
 
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i]
-    const descuento = Number(item.descuento_item_pct || 0)
-    const precioFinal = Number(item.precio_usd) * (1 - descuento / 100)
-    const subtotalUSD = precioFinal * Number(item.cantidad)
-    const subtotalARS = dolarVenta ? subtotalUSD * dolarVenta : null
+  const head = mostrarARS
+    ? [['#', 'Descripción', 'Cant.', 'P. Unit. USD', 'Subtotal USD', 'P. Unit. ARS', 'Subtotal ARS']]
+    : [['#', 'Descripción', 'Cant.', 'P. Unit. USD', 'Subtotal USD']]
 
-    if (y > pageH - 60) {
-      doc.addPage()
-      y = 14
-    }
+  const body = items.map((item, i) => {
+    const desc = Number(item.descuento_item_pct || 0)
+    const pUnit = Number(item.precio_usd || 0) * (1 - desc / 100)
+    const sub = pUnit * Number(item.cantidad || 0)
+    // El detalle va en la misma celda de descripción, en una línea aparte.
+    let descripcion = item.descripcion || 'Ítem'
+    if (item.detalle) descripcion += '\n' + item.detalle
+    const row = [String(i + 1), descripcion, String(item.cantidad ?? ''), fUSD(pUnit), fUSD(sub)]
+    if (mostrarARS) row.push(fARS(pUnit * dolarVenta), fARS(sub * dolarVenta))
+    return row
+  })
 
-    // Header del item
-    doc.setFillColor(26, 26, 26)
-    doc.rect(margin - 4, y, pageW - margin * 2 + 8, 12, 'F')
-    doc.setFontSize(7)
-    doc.setFont('helvetica', 'normal')
-    doc.setTextColor(100, 100, 100)
-    doc.text(`#${i + 1}`, margin, y + 8)
-    doc.setFontSize(11)
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(240, 240, 234)
-    doc.text(item.descripcion || 'Item', margin + 8, y + 8)
-    y += 12
-
-    // Imagen del producto
-    let imageWidth = 0
-    if (item.producto?.foto_url) {
-      const imgBase64 = await loadImageAsBase64(item.producto.foto_url)
-      if (imgBase64 && addImageSafe(imgBase64, margin, y + 3, 28, 22)) imageWidth = 32
-    }
-    const textX = margin + imageWidth
-
-    if (item.detalle) {
-      doc.setFontSize(8)
-      doc.setFont('helvetica', 'italic')
-      doc.setTextColor(150, 150, 150)
-      doc.text(item.detalle, textX, y + 8)
-    }
-
-    const precioY = y + (item.detalle ? 16 : 8)
-    doc.setFontSize(8)
-    doc.setFont('helvetica', 'normal')
-    doc.setTextColor(136, 136, 136)
-    doc.text('Cant.', textX, precioY)
-    doc.text('P. Unit.', textX + 20, precioY)
-    if (mostrarARS && dolarVenta) doc.text('En ARS', textX + 55, precioY)
-    doc.text('Subtotal', pageW - margin, precioY, { align: 'right' })
-
-    doc.setFontSize(9)
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(240, 240, 234)
-    doc.text(`${item.cantidad}`, textX, precioY + 6)
-
-    if (descuento > 0) {
-      doc.setFontSize(7)
-      doc.setFont('helvetica', 'normal')
-      doc.setTextColor(100, 100, 100)
-      const tachado = `USD ${Number(item.precio_usd).toFixed(2)}`
-      doc.text(tachado, textX + 20, precioY + 4)
-      doc.setLineWidth(0.3)
-      doc.setDrawColor(100, 100, 100)
-      doc.line(textX + 20, precioY + 3, textX + 20 + doc.getTextWidth(tachado), precioY + 3)
-      doc.setFontSize(9)
-      doc.setFont('helvetica', 'bold')
-      doc.setTextColor(240, 240, 234)
-      doc.text(`USD ${precioFinal.toFixed(2)}`, textX + 20, precioY + 10)
-      if (mostrarARS && dolarVenta) {
-        doc.setFontSize(8)
-        doc.setTextColor(100, 180, 100)
-        doc.text(`$ ${Math.round(precioFinal * dolarVenta).toLocaleString('es-AR')}`, textX + 55, precioY + 10)
+  autoTable(doc, {
+    startY: y,
+    head,
+    body,
+    margin: { left: margin, right: margin, bottom: FOOTER_H + 4 },
+    theme: 'striped',
+    styles: {
+      font: 'helvetica',
+      fontSize: 8,
+      textColor: GRIS_TXT,
+      cellPadding: 2,
+      valign: 'middle',
+      lineColor: [228, 228, 222],
+      lineWidth: 0.1,
+    },
+    headStyles: { fillColor: NEGRO, textColor: BLANCO, fontSize: 8, fontStyle: 'bold', halign: 'left' },
+    bodyStyles: { fontSize: 8, textColor: GRIS_TXT },
+    alternateRowStyles: { fillColor: [248, 248, 244] },
+    columnStyles: {
+      0: { cellWidth: 8, halign: 'center' },
+      1: { cellWidth: 'auto' },
+      2: { cellWidth: 14, halign: 'center' },
+      3: { halign: 'right' },
+      4: { halign: 'right' },
+      5: { halign: 'right' },
+      6: { halign: 'right' },
+    },
+    // El detalle (línea extra de la celda 1) se muestra más chico y gris.
+    didParseCell: (data) => {
+      if (data.section === 'body' && data.column.index === 1) {
+        const it = items[data.row.index]
+        if (it?.detalle) data.cell.styles.fontSize = 7.5
       }
-    } else {
-      doc.text(`USD ${precioFinal.toFixed(2)}`, textX + 20, precioY + 6)
-      if (mostrarARS && dolarVenta) {
-        doc.setFontSize(8)
-        doc.setFont('helvetica', 'normal')
-        doc.setTextColor(100, 180, 100)
-        doc.text(`$ ${Math.round(precioFinal * dolarVenta).toLocaleString('es-AR')}`, textX + 55, precioY + 6)
-      }
-    }
+    },
+  })
 
-    doc.setFontSize(10)
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(240, 240, 234)
-    doc.text(`USD ${subtotalUSD.toFixed(2)}`, pageW - margin, precioY + 6, { align: 'right' })
-    if (mostrarARS && subtotalARS) {
-      doc.setFontSize(8)
-      doc.setFont('helvetica', 'normal')
-      doc.setTextColor(100, 180, 100)
-      doc.text(`$ ${Math.round(subtotalARS).toLocaleString('es-AR')}`, pageW - margin, precioY + 13, { align: 'right' })
-    }
+  y = (doc.lastAutoTable?.finalY ?? y) + 8
 
-    y += Math.max(imageWidth > 0 ? 30 : 0, item.detalle ? 28 : 20)
-    doc.setDrawColor(40, 40, 40)
-    doc.setLineWidth(0.2)
-    doc.line(margin, y, pageW - margin, y)
-    y += 4
-  }
-
-  y += 6
-
-  // ── TOTALES + CONDICIONES DE PAGO ────────────────
+  // ── 6. BLOQUE DE TOTALES (no se corta entre páginas) ──
   const descuentoGlobal = Number(cotizacion.descuento_pct || 0)
   const totalUSD = Number(cotizacion.total_usd || 0)
-  const totalARS = dolarVenta ? totalUSD * dolarVenta : null
   const subtotalBase = Number(cotizacion.subtotal_usd || totalUSD)
+  const totalARS = mostrarARS ? totalUSD * dolarVenta : null
 
-  let boxH = 30
-  if (descuentoGlobal > 0) boxH += 10
-  if (mostrarARS && totalARS) boxH += 12
-
-  if (y > pageH - (boxH + 30)) {
-    doc.addPage()
-    y = 14
-  }
+  if (pageH - y < 60) y = nuevaPagina()
 
   const boxW = 90
   const boxX = pageW - margin - boxW
-  const boxY = y
+  const padX = 6
+  const boxH = 28 + (descuentoGlobal > 0 ? 6 : 0) + (totalARS ? 8 : 0)
 
-  doc.setFillColor(20, 20, 20)
-  doc.roundedRect(boxX, boxY, boxW, boxH, 2, 2, 'F')
-  doc.setDrawColor(51, 51, 51)
-  doc.setLineWidth(0.3)
-  doc.roundedRect(boxX, boxY, boxW, boxH, 2, 2, 'S')
+  doc.setFillColor(...GRIS_CLARO)
+  doc.rect(boxX, y, boxW, boxH, 'F')
+  doc.setDrawColor(205, 205, 198)
+  doc.setLineWidth(0.2)
+  doc.rect(boxX, y, boxW, boxH, 'S')
 
-  let ty = boxY + 8
-  doc.setFontSize(8)
+  let ry = y + 7
   doc.setFont('helvetica', 'normal')
-  doc.setTextColor(136, 136, 136)
-  doc.text('Subtotal:', boxX + 6, ty)
-  doc.setTextColor(200, 200, 200)
-  doc.text(`USD ${subtotalBase.toFixed(2)}`, boxX + boxW - 6, ty, { align: 'right' })
-  ty += 8
+  doc.setFontSize(9)
+  doc.setTextColor(...GRIS)
+  doc.text('Subtotal:', boxX + padX, ry)
+  doc.setTextColor(...GRIS_TXT)
+  doc.text(`USD ${fUSD(subtotalBase)}`, boxX + boxW - padX, ry, { align: 'right' })
+  ry += 6
 
   if (descuentoGlobal > 0) {
-    doc.setTextColor(136, 136, 136)
-    doc.text(`Descuento ${descuentoGlobal}%:`, boxX + 6, ty)
-    doc.setTextColor(100, 180, 100)
-    doc.text(`- USD ${((subtotalBase * descuentoGlobal) / 100).toFixed(2)}`, boxX + boxW - 6, ty, { align: 'right' })
-    ty += 8
-    doc.setDrawColor(51, 51, 51)
-    doc.line(boxX + 4, ty - 2, boxX + boxW - 4, ty - 2)
-  }
-
-  doc.setFontSize(11)
-  doc.setFont('helvetica', 'bold')
-  doc.setTextColor(240, 240, 234)
-  doc.text('TOTAL USD:', boxX + 6, ty + 6)
-  doc.text(`USD ${totalUSD.toFixed(2)}`, boxX + boxW - 6, ty + 6, { align: 'right' })
-  ty += 10
-
-  if (mostrarARS && totalARS) {
     doc.setFontSize(9)
-    doc.setFont('helvetica', 'normal')
-    doc.setTextColor(100, 180, 100)
-    doc.text(`≈ $ ${Math.round(totalARS).toLocaleString('es-AR')}`, boxX + boxW - 6, ty + 4, { align: 'right' })
-    doc.setFontSize(6)
-    doc.setTextColor(100, 100, 100)
-    doc.text(`(dólar blue: $${dolarVenta})`, boxX + 6, ty + 4)
+    doc.setTextColor(...GRIS)
+    doc.text(`Descuento ${descuentoGlobal}%:`, boxX + padX, ry)
+    doc.text(`- USD ${fUSD((subtotalBase * descuentoGlobal) / 100)}`, boxX + boxW - padX, ry, { align: 'right' })
+    ry += 6
   }
 
-  // Condiciones de pago (anticipo/saldo 70/30) a la izquierda del box
-  const condX = margin
-  const condW = boxX - margin - 8
-  const anticipo70 = totalUSD * 0.7
-  const saldo30 = totalUSD * 0.3
+  doc.setDrawColor(200, 200, 193)
+  doc.setLineWidth(0.2)
+  doc.line(boxX + padX, ry - 2, boxX + boxW - padX, ry - 2)
+  ry += 2
 
-  doc.setFillColor(15, 26, 15)
-  doc.roundedRect(condX, boxY, condW, boxH, 2, 2, 'F')
-  doc.setDrawColor(40, 100, 40)
-  doc.setLineWidth(0.3)
-  doc.roundedRect(condX, boxY, condW, boxH, 2, 2, 'S')
-  doc.setFillColor(74, 153, 74)
-  doc.rect(condX, boxY, 2, boxH, 'F')
-
-  doc.setFontSize(7)
-  doc.setFont('helvetica', 'normal')
-  doc.setTextColor(100, 180, 100)
-  doc.setCharSpace(1)
-  doc.text('CONDICIONES DE PAGO', condX + 6, boxY + 7)
-  doc.setCharSpace(0)
-  doc.setFontSize(9)
   doc.setFont('helvetica', 'bold')
-  doc.setTextColor(240, 240, 234)
-  doc.text(`Anticipo (70%): USD ${anticipo70.toFixed(2)}`, condX + 6, boxY + 15)
+  doc.setFontSize(12)
+  doc.setTextColor(...NEGRO)
+  doc.text('TOTAL USD:', boxX + padX, ry + 2)
+  doc.text(`USD ${fUSD(totalUSD)}`, boxX + boxW - padX, ry + 2, { align: 'right' })
+  ry += 8
+
+  if (totalARS) {
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(...GRIS)
+    const arsTxt = `≈ ARS: ${fARS(totalARS)}`
+    doc.setFontSize(9)
+    if (doc.getTextWidth(arsTxt) > boxW - padX * 2) doc.setFontSize(7)
+    const arsLines = doc.splitTextToSize(arsTxt, boxW - padX * 2)
+    doc.text(arsLines, boxX + boxW - padX, ry, { align: 'right' })
+  }
+
+  // Tipo de cambio fuera del recuadro
+  let belowY = y + boxH + 4
+  if (dolarVenta) {
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(7)
+    doc.setTextColor(...GRIS)
+    doc.text(`(dólar blue: $${dolarVenta})`, boxX + boxW - padX, belowY, { align: 'right' })
+    belowY += 4
+  }
+
+  y = belowY + 4
+
+  // ── 7. CONDICIONES DE PAGO ────────────────────────
+  if (pageH - y < 36) y = nuevaPagina()
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(8)
+  doc.setTextColor(...NEGRO)
+  doc.setCharSpace(0.5)
+  doc.text('CONDICIONES DE PAGO', margin, y)
+  doc.setCharSpace(0)
+  y += 5
+
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8)
-  doc.setTextColor(180, 180, 180)
-  doc.text(`Saldo contra entrega (30%): USD ${saldo30.toFixed(2)}`, condX + 6, boxY + 23)
-  if (mostrarARS && dolarVenta) {
-    doc.setFontSize(7)
-    doc.setTextColor(100, 100, 100)
-    doc.text(`≈ Anticipo ARS ${Math.round(anticipo70 * dolarVenta).toLocaleString('es-AR')}`, condX + 6, boxY + 30)
+  doc.setTextColor(...GRIS)
+  if (cotizacion.condiciones_pago) {
+    const cpLines = doc.splitTextToSize(cotizacion.condiciones_pago, contentW)
+    doc.text(cpLines, margin, y)
+    y += cpLines.length * 4 + 1
   }
+  const anticipo = totalUSD * 0.7
+  const saldo = totalUSD * 0.3
+  doc.text(
+    `Anticipo (70%): USD ${fUSD(anticipo)}${mostrarARS ? `  ·  ≈ ${fARS(anticipo * dolarVenta)}` : ''}`,
+    margin,
+    y
+  )
+  y += 4
+  doc.text(
+    `Saldo contra entrega (30%): USD ${fUSD(saldo)}${mostrarARS ? `  ·  ≈ ${fARS(saldo * dolarVenta)}` : ''}`,
+    margin,
+    y
+  )
+  y += 8
 
-  y = boxY + boxH + 10
+  // ── 8. CONDICIONES ADICIONALES ────────────────────
+  if (pageH - y < 30) y = nuevaPagina()
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(8)
+  doc.setTextColor(...NEGRO)
+  doc.setCharSpace(0.5)
+  doc.text('CONDICIONES ADICIONALES', margin, y)
+  doc.setCharSpace(0)
+  y += 5
 
-  // ── NOTAS DEL CLIENTE ────────────────────────────
-  if (cotizacion.notas) {
-    if (y > pageH - 50) {
-      doc.addPage()
-      y = 14
-    }
-    doc.setFontSize(7)
-    doc.setFont('helvetica', 'normal')
-    doc.setTextColor(136, 136, 136)
-    doc.setCharSpace(1.5)
-    doc.text('CONDICIONES ADICIONALES', margin, y)
-    doc.setCharSpace(0)
-    y += 5
-    const notasLines = doc.splitTextToSize(cotizacion.notas, pageW - margin * 2 - 16)
-    const notasH = notasLines.length * 4 + 12
-    doc.setFillColor(15, 15, 15)
-    doc.roundedRect(margin, y, pageW - margin * 2, notasH, 2, 2, 'F')
-    doc.setFontSize(8)
-    doc.setTextColor(180, 180, 180)
-    doc.text(notasLines, margin + 8, y + 8)
-    y += notasH + 8
-  }
-
-  // ── CONDICIONES GENERALES ────────────────────────
-  if (y > pageH - 40) {
-    doc.addPage()
-    y = 14
-  }
-  const textoCond =
-    emailConfig.pie ||
-    emailConfig.pie_email ||
-    '• Precios sujetos a cambio sin previo aviso\n' +
-      '• Plazo de producción: 30 días hábiles desde el pago del anticipo\n' +
-      `• Tipo de cambio de referencia: dólar blue · Presupuesto válido por ${cotizacion.validez_dias} días desde la emisión`
-  doc.setFontSize(7)
   doc.setFont('helvetica', 'normal')
-  doc.setTextColor(110, 110, 110)
-  doc.text(doc.splitTextToSize(textoCond, pageW - margin * 2), margin, y)
+  doc.setFontSize(7)
+  doc.setTextColor(...GRIS)
+  const adicionales = []
+  if (cotizacion.notas_internas) adicionales.push(cotizacion.notas_internas)
+  adicionales.push('• Precios sujetos a cambio sin previo aviso')
+  adicionales.push('• Plazo de producción: 30 días hábiles desde el pago del anticipo')
+  adicionales.push('• Tipo de cambio de referencia: dólar blue')
+  adicionales.push(`• Presupuesto válido por ${cotizacion.validez_dias || 0} días desde la emisión`)
+  doc.text(doc.splitTextToSize(adicionales.join('\n'), contentW), margin, y)
 
-  // ── FOOTER en todas las páginas ──────────────────
+  // ── 9. FOOTER en todas las páginas ────────────────
   const totalPages = doc.internal.getNumberOfPages()
   for (let p = 1; p <= totalPages; p++) {
     doc.setPage(p)
