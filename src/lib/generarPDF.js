@@ -77,14 +77,19 @@ export async function generarCotizacionPDF(cotizacion, dolarVenta) {
   doc.text('HANDMADE CYCLES · BUENOS AIRES', margin, 25)
   doc.setCharSpace(0)
 
-  doc.setFontSize(9)
-  doc.setTextColor(...BLANCO)
-  doc.text(cotizacion.numero || '', pageW - margin, 12, { align: 'right' })
+  // Bloque derecho ordenado: label, número y fecha (sin letter-spacing para
+  // que alineen perfecto a la derecha).
+  doc.setFont('helvetica', 'normal')
   doc.setFontSize(7)
   doc.setTextColor(...GRIS_LUZ)
-  doc.setCharSpace(1)
-  doc.text('PRESUPUESTO', pageW - margin, 18, { align: 'right' })
-  doc.setCharSpace(0)
+  doc.text('PRESUPUESTO', pageW - margin, 12, { align: 'right' })
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(11)
+  doc.setTextColor(...BLANCO)
+  doc.text(cotizacion.numero || '', pageW - margin, 18, { align: 'right' })
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(7)
+  doc.setTextColor(...GRIS_LUZ)
   doc.text(fecha(cotizacion.created_at), pageW - margin, 23, { align: 'right' })
 
   // ── 2. FRANJA DELGADA (#F0F0EA) ───────────────────
@@ -110,9 +115,7 @@ export async function generarCotizacionPDF(cotizacion, dolarVenta) {
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(7)
   doc.setTextColor(...GRIS)
-  doc.setCharSpace(1)
   doc.text('PARA:', margin, y)
-  doc.setCharSpace(0)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(12)
   doc.setTextColor(...NEGRO)
@@ -128,9 +131,7 @@ export async function generarCotizacionPDF(cotizacion, dolarVenta) {
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(7)
   doc.setTextColor(...GRIS)
-  doc.setCharSpace(1)
   doc.text('VÁLIDO POR:', pageW - margin, y, { align: 'right' })
-  doc.setCharSpace(0)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(11)
   doc.setTextColor(...NEGRO)
@@ -230,6 +231,10 @@ export async function generarCotizacionPDF(cotizacion, dolarVenta) {
   const subtotalBase = Number(cotizacion.subtotal_usd || totalUSD)
   const totalARS = mostrarARS ? totalUSD * dolarVenta : null
   const hayDesc = descuentoGlobal > 0
+  // Conversiones a ARS para mostrar subtotal y descuento en pesos (solo display).
+  const subtotalARS = totalARS != null ? subtotalBase * dolarVenta : null
+  const descMontoUSD = (subtotalBase * descuentoGlobal) / 100
+  const descMontoARS = totalARS != null ? descMontoUSD * dolarVenta : null
 
   // Baselines de cada fila respecto del tope del recuadro.
   const oSub = 8
@@ -254,22 +259,32 @@ export async function generarCotizacionPDF(cotizacion, dolarVenta) {
   doc.setLineWidth(0.3)
   doc.rect(boxX, y, boxW, boxH, 'S')
 
-  // Subtotal
+  // Subtotal (misma tipografía y tamaño que Descuento; en pesos)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8)
   doc.setTextColor(...GRIS)
   doc.text('Subtotal:', labX, y + oSub)
   doc.setTextColor(...GRIS_TXT)
-  doc.text(`USD ${fUSD(subtotalBase)}`, valX, y + oSub, { align: 'right' })
+  doc.text(
+    subtotalARS != null ? fARS(subtotalARS) : `USD ${fUSD(subtotalBase)}`,
+    valX,
+    y + oSub,
+    { align: 'right' }
+  )
 
-  // Descuento (signo "-" ASCII simple)
+  // Descuento (mismo estilo que Subtotal; en pesos; signo "-" ASCII)
   if (hayDesc) {
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(8)
     doc.setTextColor(...GRIS)
     doc.text(`Descuento ${descuentoGlobal}%:`, labX, y + oDesc)
     doc.setTextColor(...GRIS_TXT)
-    doc.text(`- USD ${fUSD((subtotalBase * descuentoGlobal) / 100)}`, valX, y + oDesc, { align: 'right' })
+    doc.text(
+      descMontoARS != null ? `- ${fARS(descMontoARS)}` : `- USD ${fUSD(descMontoUSD)}`,
+      valX,
+      y + oDesc,
+      { align: 'right' }
+    )
   }
 
   // Línea separadora
