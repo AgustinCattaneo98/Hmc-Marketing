@@ -104,7 +104,7 @@ export async function generarCotizacionPDF(cotizacion, dolarVenta) {
     cotizacion.cliente_email ||
     ''
 
-  let y = HEADER_H + 3 + 11
+  let y = HEADER_H + 3 + 9 // ~18px entre header y bloque PARA/VÁLIDO POR
 
   // Columna izquierda
   doc.setFont('helvetica', 'normal')
@@ -143,7 +143,7 @@ export async function generarCotizacionPDF(cotizacion, dolarVenta) {
   doc.setTextColor(...GRIS)
   doc.text(`Vence: ${fechaVence}`, pageW - margin, y + 12, { align: 'right' })
 
-  y += 20
+  y += 19 // ~14px entre bloque cliente y título
 
   // ── 4. TÍTULO ─────────────────────────────────────
   doc.setDrawColor(...NEGRO)
@@ -205,13 +205,13 @@ export async function generarCotizacionPDF(cotizacion, dolarVenta) {
     bodyStyles: { fontSize: 8, textColor: GRIS_TXT },
     alternateRowStyles: { fillColor: [248, 248, 244] },
     columnStyles: {
-      0: { cellWidth: 8, halign: 'center' },
-      1: { cellWidth: 'auto' },
-      2: { cellWidth: 14, halign: 'center' },
-      3: { halign: 'right' },
-      4: { halign: 'right' },
-      5: { halign: 'right' },
-      6: { halign: 'right' },
+      0: { cellWidth: 8, halign: 'center' }, // #
+      1: { cellWidth: 'auto' }, // Descripción (flexible)
+      2: { cellWidth: 14, halign: 'center' }, // Cant.
+      3: { cellWidth: 30, halign: 'right' },
+      4: { cellWidth: 30, halign: 'right' },
+      5: { cellWidth: 30, halign: 'right' },
+      6: { cellWidth: 30, halign: 'right' },
     },
     // El detalle (línea extra de la celda 1) se muestra más chico y gris.
     didParseCell: (data) => {
@@ -222,98 +222,80 @@ export async function generarCotizacionPDF(cotizacion, dolarVenta) {
     },
   })
 
-  y = (doc.lastAutoTable?.finalY ?? y) + 8
+  y = (doc.lastAutoTable?.finalY ?? y) + 6 // ~10px entre tabla y totales
 
-  // ── 6. BLOQUE DE TOTALES (no se corta entre páginas) ──
+  // ── 6. BLOQUE DE TOTALES ──────────────────────────
   const descuentoGlobal = Number(cotizacion.descuento_pct || 0)
   const totalUSD = Number(cotizacion.total_usd || 0)
   const subtotalBase = Number(cotizacion.subtotal_usd || totalUSD)
   const totalARS = mostrarARS ? totalUSD * dolarVenta : null
-
-  if (pageH - y < 64) y = nuevaPagina()
-
-  const boxW = 92
-  const boxX = pageW - margin - boxW
-  const padX = 7
-  const labX = boxX + padX
-  const valX = boxX + boxW - padX // borde derecho de los valores
   const hayDesc = descuentoGlobal > 0
 
-  // Alto calculado según las filas reales (evita que el ARS se salga).
-  const boxH = 26 + (hayDesc ? 6 : 0) + (totalARS ? 6 : 0)
+  // Baselines de cada fila respecto del tope del recuadro.
+  const oSub = 8
+  const oDesc = oSub + 6
+  const oSepCursor = (hayDesc ? oDesc : oSub) + 6
+  const oTotal = oSepCursor + 5
+  const oArs = oTotal + 6
+  const boxH = (totalARS ? oArs : oTotal) + 5
 
+  if (pageH - y < boxH + 24) y = nuevaPagina()
+
+  const boxW = 85
+  const boxX = pageW - margin - boxW
+  const pad = 6
+  const labX = boxX + pad
+  const valX = boxX + boxW - pad
+
+  // Recuadro
   doc.setFillColor(...GRIS_CLARO)
   doc.rect(boxX, y, boxW, boxH, 'F')
-  doc.setDrawColor(200, 200, 193)
+  doc.setDrawColor(200, 200, 200)
   doc.setLineWidth(0.3)
   doc.rect(boxX, y, boxW, boxH, 'S')
 
-  let ry = y + 9
-
-  // Subtotal (en USD)
+  // Subtotal
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(9)
+  doc.setFontSize(8)
   doc.setTextColor(...GRIS)
-  doc.text('Subtotal', labX, ry)
+  doc.text('Subtotal:', labX, y + oSub)
   doc.setTextColor(...GRIS_TXT)
-  doc.text(`USD ${fUSD(subtotalBase)}`, valX, ry, { align: 'right' })
-  ry += 6
+  doc.text(`USD ${fUSD(subtotalBase)}`, valX, y + oSub, { align: 'right' })
 
+  // Descuento (signo "-" ASCII simple)
   if (hayDesc) {
-    doc.setTextColor(...GRIS)
-    doc.text(`Descuento ${descuentoGlobal}%`, labX, ry)
-    doc.setTextColor(...GRIS_TXT)
-    doc.text(`− USD ${fUSD((subtotalBase * descuentoGlobal) / 100)}`, valX, ry, { align: 'right' })
-    ry += 6
-  }
-
-  // Separador
-  doc.setDrawColor(190, 190, 183)
-  doc.setLineWidth(0.3)
-  doc.line(labX, ry - 1, valX, ry - 1)
-  ry += 5
-
-  if (totalARS) {
-    // TOTAL en ARS (principal, arriba). Achica la fuente si no entra.
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(8)
-    doc.setTextColor(...GRIS)
-    doc.setCharSpace(0.5)
-    doc.text('TOTAL', labX, ry)
-    doc.setCharSpace(0)
-    const arsTxt = fARS(totalARS)
-    let arsFs = 15
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(...NEGRO)
-    doc.setFontSize(arsFs)
-    const maxValW = boxW - padX * 2 - 16
-    while (doc.getTextWidth(arsTxt) > maxValW && arsFs > 9) {
-      arsFs -= 1
-      doc.setFontSize(arsFs)
-    }
-    doc.text(arsTxt, valX, ry + 0.5, { align: 'right' })
-    ry += 6
-    // Equivalente en USD (secundario, abajo)
     doc.setFont('helvetica', 'normal')
-    doc.setFontSize(9)
-    doc.setTextColor(...GRIS)
-    doc.text('en dólares', labX, ry)
-    doc.setTextColor(...GRIS_TXT)
-    doc.text(`USD ${fUSD(totalUSD)}`, valX, ry, { align: 'right' })
-  } else {
-    doc.setFont('helvetica', 'bold')
     doc.setFontSize(8)
     doc.setTextColor(...GRIS)
-    doc.setCharSpace(0.5)
-    doc.text('TOTAL', labX, ry)
-    doc.setCharSpace(0)
-    doc.setFontSize(14)
-    doc.setTextColor(...NEGRO)
-    doc.text(`USD ${fUSD(totalUSD)}`, valX, ry + 0.5, { align: 'right' })
+    doc.text(`Descuento ${descuentoGlobal}%:`, labX, y + oDesc)
+    doc.setTextColor(...GRIS_TXT)
+    doc.text(`- USD ${fUSD((subtotalBase * descuentoGlobal) / 100)}`, valX, y + oDesc, { align: 'right' })
   }
 
-  // Tipo de cambio, fuera del recuadro
-  let belowY = y + boxH + 4
+  // Línea separadora
+  doc.setDrawColor(180, 180, 180)
+  doc.setLineWidth(0.3)
+  doc.line(labX, y + oSepCursor, valX, y + oSepCursor)
+
+  // TOTAL USD
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(11)
+  doc.setTextColor(...NEGRO)
+  doc.text('TOTAL USD:', labX, y + oTotal)
+  doc.text(`USD ${fUSD(totalUSD)}`, valX, y + oTotal, { align: 'right' })
+
+  // ≈ ARS (con splitTextToSize para que no se corte)
+  if (totalARS) {
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8)
+    doc.setTextColor(...GRIS)
+    doc.text('≈ ARS:', labX, y + oArs)
+    const arsLines = doc.splitTextToSize(fARS(totalARS), boxW - pad * 2 - 16)
+    doc.text(arsLines, valX, y + oArs, { align: 'right' })
+  }
+
+  // Tipo de cambio, debajo del recuadro, alineado a la derecha
+  let belowY = y + boxH + 5
   if (dolarVenta) {
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(7)
@@ -322,7 +304,7 @@ export async function generarCotizacionPDF(cotizacion, dolarVenta) {
     belowY += 4
   }
 
-  y = belowY + 4
+  y = belowY + 9 // ~18px entre totales y CONDICIONES DE PAGO
 
   // ── 7 y 8. CONDICIONES (texto editable por el usuario) ──
   // Bloque de condiciones legible: título + texto en negro tenue, bien espaciado.
