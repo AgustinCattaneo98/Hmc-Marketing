@@ -9,6 +9,7 @@ import {
   deleteVariante,
 } from '../lib/db'
 import { supabase } from '../lib/supabase'
+import { comprimirImagen } from '../lib/imagen'
 import { convertir, formatMonto } from '../lib/dolar'
 import { MONEDAS } from '../lib/productos'
 import CategoriaModal from './CategoriaModal'
@@ -75,10 +76,11 @@ export default function ProductoModal({ producto, cotizacion, onClose, onSaved }
   }
 
   async function subir(file, carpeta, contentType) {
-    const path = `${carpeta}/${Date.now()}_${sanitizar(file.name)}`
+    const f = await comprimirImagen(file)
+    const path = `${carpeta}/${Date.now()}_${sanitizar(f.name)}`
     const { error: upErr } = await supabase.storage
       .from('productos')
-      .upload(path, file, { upsert: true, contentType: contentType || file.type })
+      .upload(path, f, { upsert: true, contentType: contentType || f.type })
     if (upErr) throw upErr
     return supabase.storage.from('productos').getPublicUrl(path).data.publicUrl
   }

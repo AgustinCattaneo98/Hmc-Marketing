@@ -3,6 +3,7 @@
 // leyendo con loadStr/loadJSON, y acá nos encargamos de volcar lo remoto a
 // local al iniciar y de empujar cada cambio a Supabase al guardar.
 import { supabase } from './supabase'
+import { comprimirImagen } from './imagen'
 import { STORAGE, saveJSON, saveStr } from './settings'
 import { applyAparienciaInicial } from './theme'
 
@@ -87,11 +88,12 @@ export async function guardarConfig(storageKey, valor) {
 export async function subirImagenConfig(file, nombre) {
   const uid = await getUserId()
   if (!uid) return { error: 'No autenticado' }
-  const ext = (file.name.split('.').pop() || 'png').toLowerCase()
+  const optim = await comprimirImagen(file)
+  const ext = (optim.name.split('.').pop() || 'webp').toLowerCase()
   const path = `config/${uid}/${nombre}.${ext}`
   const { error: upErr } = await supabase.storage
     .from('logos')
-    .upload(path, file, { upsert: true, contentType: file.type })
+    .upload(path, optim, { upsert: true, contentType: optim.type })
   if (upErr) return { error: upErr.message }
   const { data } = supabase.storage.from('logos').getPublicUrl(path)
   return { url: `${data.publicUrl}?t=${Date.now()}` }

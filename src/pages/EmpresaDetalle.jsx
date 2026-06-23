@@ -24,6 +24,7 @@ import {
   deleteContacto,
 } from '../lib/db'
 import { supabase } from '../lib/supabase'
+import { comprimirImagen } from '../lib/imagen'
 import { iniciales, limpiarWhatsapp } from '../lib/utils'
 import { SegmentoPills } from '../components/SegmentoPill'
 import EmpresaModal from '../components/EmpresaModal'
@@ -80,12 +81,13 @@ export default function EmpresaDetalle() {
     setError('')
     setUploading(true)
 
-    const ext = file.name.split('.').pop()
+    const optim = await comprimirImagen(file)
+    const ext = optim.name.split('.').pop()
     const path = `empresas/${empresa.id}.${ext}`
 
     const { error: upErr } = await supabase.storage
       .from('logos')
-      .upload(path, file, { upsert: true, contentType: file.type })
+      .upload(path, optim, { upsert: true, contentType: optim.type })
 
     if (upErr) {
       setUploading(false)

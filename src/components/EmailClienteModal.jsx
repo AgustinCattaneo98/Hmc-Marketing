@@ -12,6 +12,7 @@ import {
   createPlantilla,
 } from '../lib/db'
 import { supabase } from '../lib/supabase'
+import { comprimirImagen } from '../lib/imagen'
 import {
   TIPOS_BLOQUE,
   ESTADO_EMAIL,
@@ -100,11 +101,12 @@ export default function EmailClienteModal({ cliente, campana, onClose, onSaved }
   async function handleImagen(id, file) {
     if (!file) return
     setError('')
-    const ext = file.name.split('.').pop()
+    const optim = await comprimirImagen(file)
+    const ext = optim.name.split('.').pop()
     const path = `campanas/${campana.id}/${Date.now()}.${ext}`
     const { error: upErr } = await supabase.storage
       .from('campanas')
-      .upload(path, file, { upsert: true, contentType: file.type })
+      .upload(path, optim, { upsert: true, contentType: optim.type })
     if (upErr) {
       setError('No se pudo subir la imagen: ' + upErr.message)
       return

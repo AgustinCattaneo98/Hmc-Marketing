@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { TbX, TbCamera } from 'react-icons/tb'
 import { supabase } from '../lib/supabase'
+import { comprimirImagen } from '../lib/imagen'
 import { getEmpresas } from '../lib/db'
 import { iniciales } from '../lib/utils'
 import { confirmDialog } from './confirm'
@@ -81,12 +82,13 @@ export default function ContactoModal({
     setError('')
     setUploading(true)
 
-    const ext = file.name.split('.').pop()
+    const optim = await comprimirImagen(file)
+    const ext = optim.name.split('.').pop()
     const path = `contactos/${contacto?.id ?? Date.now()}.${ext}`
 
     const { error: upErr } = await supabase.storage
       .from('avatares')
-      .upload(path, file, { upsert: true, contentType: file.type })
+      .upload(path, optim, { upsert: true, contentType: optim.type })
 
     if (upErr) {
       setUploading(false)
