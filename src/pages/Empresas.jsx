@@ -30,6 +30,9 @@ import ImportModal from '../components/ImportModal'
 import { SegmentoPills } from '../components/SegmentoPill'
 import { confirmDialog } from '../components/confirm'
 
+const filtroSelectClass =
+  'rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white'
+
 export default function Empresas() {
   const navigate = useNavigate()
   const [empresas, setEmpresas] = useState([])
@@ -38,6 +41,10 @@ export default function Empresas() {
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [segmentoFiltro, setSegmentoFiltro] = useState('')
+  const [provinciaFiltro, setProvinciaFiltro] = useState('')
+  const [ciudadFiltro, setCiudadFiltro] = useState('')
+  const [contactosFiltro, setContactosFiltro] = useState('') // '' | con | sin
+  const [orden, setOrden] = useState('recientes') // recientes | nombre | contactos
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [importOpen, setImportOpen] = useState(false)
@@ -69,15 +76,56 @@ export default function Empresas() {
     return empresa.contactos?.[0]?.count ?? 0
   }
 
+  // Opciones dinámicas de provincia y ciudad según los datos cargados.
+  const provincias = useMemo(
+    () =>
+      [...new Set(empresas.map((e) => (e.provincia || '').trim()).filter(Boolean))].sort((a, b) =>
+        a.localeCompare(b)
+      ),
+    [empresas]
+  )
+  const ciudades = useMemo(
+    () =>
+      [...new Set(empresas.map((e) => (e.ciudad || '').trim()).filter(Boolean))].sort((a, b) =>
+        a.localeCompare(b)
+      ),
+    [empresas]
+  )
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return empresas.filter((e) => {
+    const arr = empresas.filter((e) => {
       const matchSegmento =
         !segmentoFiltro || (e.segmentos ?? []).some((s) => s.id === segmentoFiltro)
       const matchSearch = !q || (e.nombre ?? '').toLowerCase().includes(q)
-      return matchSegmento && matchSearch
+      const matchProv = !provinciaFiltro || (e.provincia || '').trim() === provinciaFiltro
+      const matchCiudad = !ciudadFiltro || (e.ciudad || '').trim() === ciudadFiltro
+      const cc = contactCount(e)
+      const matchContactos =
+        !contactosFiltro || (contactosFiltro === 'con' ? cc > 0 : cc === 0)
+      return matchSegmento && matchSearch && matchProv && matchCiudad && matchContactos
     })
-  }, [empresas, search, segmentoFiltro])
+    arr.sort((a, b) => {
+      if (orden === 'nombre') return (a.nombre || '').localeCompare(b.nombre || '')
+      if (orden === 'contactos') return contactCount(b) - contactCount(a)
+      return new Date(b.created_at) - new Date(a.created_at) // recientes
+    })
+    return arr
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [empresas, search, segmentoFiltro, provinciaFiltro, ciudadFiltro, contactosFiltro, orden])
+
+  const hayFiltros =
+    !!(search || segmentoFiltro || provinciaFiltro || ciudadFiltro || contactosFiltro) ||
+    orden !== 'recientes'
+
+  function limpiarFiltros() {
+    setSearch('')
+    setSegmentoFiltro('')
+    setProvinciaFiltro('')
+    setCiudadFiltro('')
+    setContactosFiltro('')
+    setOrden('recientes')
+  }
 
   function openCreate() {
     setEditing(null)
@@ -285,32 +333,91 @@ export default function Empresas() {
       </div>
 
       {/* Filtros: búsqueda por nombre + filtro por segmento */}
-      <div className="mb-5 flex gap-3">
-        <div className="relative flex-1">
-          <TbSearch
-            size={18}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-hmc-muted"
-          />
-          <input
-            type="text"
-            placeholder="Buscar por nombre…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-md border border-hmc-border bg-hmc-gray2 py-2 pl-10 pr-3 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white placeholder:text-hmc-muted"
-          />
+      <div className="mb-5 flex flex-col gap-3">
+        <div className="flex flex-wrap gap-3">
+          <div className="relative min-w-[220px] flex-1">
+            <TbSearch
+              size={18}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-hmc-muted"
+            />
+            <input
+              type="text"
+              placeholder="Buscar por nombre…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-md border border-hmc-border bg-hmc-gray2 py-2 pl-10 pr-3 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white placeholder:text-hmc-muted"
+            />
+          </div>
+          <select
+            value={segmentoFiltro}
+            onChange={(e) => setSegmentoFiltro(e.target.value)}
+            className={filtroSelectClass}
+          >
+            <option value="">Todos los segmentos</option>
+            {segmentosCatalogo.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.nombre}
+              </option>
+            ))}
+          </select>
+          <select
+            value={provinciaFiltro}
+            onChange={(e) => setProvinciaFiltro(e.target.value)}
+            className={filtroSelectClass}
+          >
+            <option value="">Todas las provincias</option>
+            {provincias.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+          <select
+            value={ciudadFiltro}
+            onChange={(e) => setCiudadFiltro(e.target.value)}
+            className={filtroSelectClass}
+          >
+            <option value="">Todas las ciudades</option>
+            {ciudades.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+          <select
+            value={contactosFiltro}
+            onChange={(e) => setContactosFiltro(e.target.value)}
+            className={filtroSelectClass}
+          >
+            <option value="">Con y sin contactos</option>
+            <option value="con">Con contactos</option>
+            <option value="sin">Sin contactos</option>
+          </select>
+          <select
+            value={orden}
+            onChange={(e) => setOrden(e.target.value)}
+            className={filtroSelectClass}
+          >
+            <option value="recientes">Más recientes</option>
+            <option value="nombre">Nombre (A-Z)</option>
+            <option value="contactos">Más contactos</option>
+          </select>
         </div>
-        <select
-          value={segmentoFiltro}
-          onChange={(e) => setSegmentoFiltro(e.target.value)}
-          className="w-48 rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white"
-        >
-          <option value="">Todos los segmentos</option>
-          {segmentosCatalogo.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.nombre}
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center justify-between text-xs text-hmc-muted">
+          <span>
+            {filtered.length} de {empresas.length} empresa{empresas.length === 1 ? '' : 's'}
+          </span>
+          {hayFiltros && (
+            <button
+              type="button"
+              onClick={limpiarFiltros}
+              className="inline-flex items-center gap-1 transition-colors hover:text-hmc-white"
+            >
+              <TbX size={14} />
+              Limpiar filtros
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Barra de acciones masivas */}
