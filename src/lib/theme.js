@@ -32,17 +32,16 @@ export function applyAccent(color) {
 }
 
 // Usa el logo de la marca (si está cargado) como favicon de la pestaña.
+// Borra los favicons existentes y crea uno nuevo: cambiar solo el href no
+// siempre lo refresca (los navegadores cachean el favicon).
 export function aplicarFavicon() {
   const url = loadStr(STORAGE.logo)
   if (!url) return
-  let link = document.querySelector("link[rel~='icon']")
-  if (!link) {
-    link = document.createElement('link')
-    link.rel = 'icon'
-    document.head.appendChild(link)
-  }
-  link.removeAttribute('type') // que el navegador detecte el formato real
+  document.querySelectorAll("link[rel~='icon'], link[rel='shortcut icon']").forEach((l) => l.remove())
+  const link = document.createElement('link')
+  link.rel = 'icon'
   link.href = url
+  document.head.appendChild(link)
 }
 
 // Aplica todas las preferencias guardadas. Llamar al iniciar la app.
