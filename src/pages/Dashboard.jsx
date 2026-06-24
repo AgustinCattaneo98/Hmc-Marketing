@@ -65,7 +65,7 @@ function venceTexto(fecha) {
 export default function Dashboard() {
   const navigate = useNavigate()
   const [periodo, setPeriodo] = useState('mes')
-  const [pipelineMoneda, setPipelineMoneda] = useState('ARS')
+  const [moneda, setMoneda] = useState('ARS')
   const cover = loadStr(COVER_KEY)
   const { data, loading, error, refetch } = useDashboard(periodo)
   const { cotizacion: dolar } = useDolar()
@@ -139,14 +139,27 @@ export default function Dashboard() {
           </p>
         )}
 
+        {/* Selector de moneda (afecta Valor Pipeline y Ventas cobradas) */}
+        <div className="mb-4 flex items-center justify-end gap-2">
+          <span className="text-xs text-hmc-muted">Moneda</span>
+          <div className="inline-flex overflow-hidden rounded-md border border-hmc-border">
+            {['ARS', 'USD'].map((mon) => (
+              <button
+                key={mon}
+                type="button"
+                onClick={() => setMoneda(mon)}
+                className={`px-3.5 py-1 text-xs font-semibold transition-colors ${
+                  moneda === mon ? 'bg-hmc-white text-hmc-black' : 'text-hmc-muted hover:text-hmc-white'
+                }`}
+              >
+                {mon}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Métricas */}
-        <Metricas
-          data={data}
-          loading={loading}
-          dolar={dolar}
-          pipelineMoneda={pipelineMoneda}
-          setPipelineMoneda={setPipelineMoneda}
-        />
+        <Metricas data={data} loading={loading} dolar={dolar} moneda={moneda} />
 
         {/* Dos columnas */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_340px]">
@@ -251,7 +264,7 @@ function pipelineTotal(m, dolar, moneda) {
   return formatARS(arsN + (venta ? usdN * venta : 0))
 }
 
-function Metricas({ data, loading, dolar, pipelineMoneda, setPipelineMoneda }) {
+function Metricas({ data, loading, dolar, moneda }) {
   if (loading) {
     return (
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
@@ -280,29 +293,22 @@ function Metricas({ data, loading, dolar, pipelineMoneda, setPipelineMoneda }) {
             {esVentas ? (
               <>
                 <p className="mt-1 text-[28px] font-bold leading-none text-hmc-white">
-                  {(m.ventasUsd ?? 0) > 0 ? formatUSD(m.ventasUsd) : '—'}
+                  {moneda === 'USD'
+                    ? (m.ventasUsd ?? 0) > 0
+                      ? formatUSD(m.ventasUsd)
+                      : '—'
+                    : (m.ventasArs ?? 0) > 0
+                      ? formatARS(m.ventasArs)
+                      : '—'}
                 </p>
-                <p className="mt-1.5 text-[11px] text-hmc-muted">
-                  {m.ventasCount ?? 0} cobros · {formatARS(m.ventasArs ?? 0)}
-                </p>
+                <p className="mt-1.5 text-[11px] text-hmc-muted">{m.ventasCount ?? 0} cobros</p>
               </>
             ) : esPipeline ? (
               <>
                 <p className="mt-1 text-[26px] font-bold leading-none text-hmc-white">
-                  {pipelineTotal(m, dolar, pipelineMoneda)}
+                  {pipelineTotal(m, dolar, moneda)}
                 </p>
-                <div className="mt-2 inline-flex overflow-hidden rounded-md border border-hmc-border">
-                  {['ARS', 'USD'].map((mon) => (
-                    <button
-                      key={mon}
-                      type="button"
-                      onClick={() => setPipelineMoneda(mon)}
-                      className={`px-2 py-0.5 text-[10px] transition-colors ${pipelineMoneda === mon ? 'bg-hmc-white text-hmc-black' : 'text-hmc-muted hover:text-hmc-white'}`}
-                    >
-                      {mon}
-                    </button>
-                  ))}
-                </div>
+                <p className="mt-1.5 text-[11px] text-hmc-muted">Valor estimado</p>
               </>
             ) : (
               <>

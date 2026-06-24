@@ -198,7 +198,10 @@ export default function ProductoDetalle() {
             {prod.linea && <span className="rounded bg-hmc-gray3 px-2 py-0.5 text-xs text-hmc-muted">{prod.linea}</span>}
           </div>
 
-          <h1 className="mt-2 text-3xl font-bold text-hmc-white">{prod.nombre}</h1>
+          <div className="mt-2 flex items-start justify-between gap-3">
+            <h1 className="text-3xl font-bold text-hmc-white">{prod.nombre}</h1>
+            <button type="button" onClick={() => setModalEdit(true)} className="inline-flex items-center gap-2 rounded-md border border-hmc-border px-4 py-2 text-sm text-hmc-white hover:bg-hmc-gray3"><TbPencil size={16} />Editar</button>
+          </div>
           {prod.precio_usd != null && (
             <>
               <p className="mt-2 text-2xl font-semibold text-hmc-white">{formatMonto(prod.precio_usd, moneda)}</p>
@@ -211,12 +214,11 @@ export default function ProductoDetalle() {
 
           {prod.descripcion && <p className="mt-3 whitespace-pre-line text-sm text-hmc-white">{prod.descripcion}</p>}
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button type="button" onClick={() => setModalEdit(true)} className="inline-flex items-center gap-2 rounded-md border border-hmc-border px-4 py-2 text-sm text-hmc-white hover:bg-hmc-gray3"><TbPencil size={16} />Editar</button>
-            {prod.pdf_url && (
+          {prod.pdf_url && (
+            <div className="mt-4 flex flex-wrap gap-2">
               <a href={prod.pdf_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-md border border-hmc-border px-4 py-2 text-sm text-hmc-white hover:bg-hmc-gray3"><TbFileText size={16} />Ver PDF</a>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
