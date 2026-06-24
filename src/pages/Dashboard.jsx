@@ -220,9 +220,14 @@ export default function Dashboard() {
 }
 
 // ---------- Componentes ----------
+// Estilo de card tipo iOS: esquinas muy redondeadas, degradado sutil,
+// hairline claro (ring) y sombra suave en vez del borde duro.
+const cardClass =
+  'rounded-2xl bg-white/[0.07] backdrop-blur-md p-5 ring-1 ring-white/15 shadow-lg shadow-black/30'
+
 function Card({ titulo, badge, children, accion }) {
   return (
-    <div className="rounded-lg border border-hmc-border bg-hmc-gray2 p-4">
+    <div className={cardClass}>
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-medium text-hmc-white">{titulo}</h2>
         {badge && <span className="rounded bg-hmc-gray3 px-2 py-0.5 text-[10px] uppercase tracking-wide text-hmc-muted">{badge}</span>}
@@ -269,7 +274,7 @@ function Metricas({ data, loading, dolar, moneda }) {
     return (
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         {Array.from({ length: 7 }).map((_, i) => (
-          <div key={i} className="rounded-lg border border-hmc-border bg-hmc-gray2 p-4">
+          <div key={i} className={cardClass}>
             <div className="h-10 animate-pulse rounded bg-hmc-gray3" />
           </div>
         ))}
@@ -286,7 +291,7 @@ function Metricas({ data, loading, dolar, moneda }) {
         const color = typeof cfg.color === 'function' ? cfg.color(valor) : cfg.color
         const Icon = cfg.icon
         return (
-          <div key={cfg.key} className="relative rounded-lg border border-hmc-border bg-hmc-gray2 p-4">
+          <div key={cfg.key} className={`relative ${cardClass}`}>
             <Icon size={28} style={{ color }} className="absolute right-3 top-3 opacity-80" />
             <p className="text-[10px] uppercase tracking-wide text-hmc-muted">{cfg.label}</p>
 

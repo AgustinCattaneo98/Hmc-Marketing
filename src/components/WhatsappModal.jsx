@@ -79,7 +79,7 @@ export default function WhatsappModal({ cliente, onClose, onSaved }) {
       onMouseDown={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-lg border border-hmc-border bg-hmc-gray2 shadow-xl"
+        className="w-full max-w-lg rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-xl shadow-black/40"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-hmc-border px-6 py-4">

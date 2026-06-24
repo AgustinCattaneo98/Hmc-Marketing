@@ -35,20 +35,20 @@ function variantesCount(p) {
 function DolarCard({ cotizacion, loading, onRefresh, compacta }) {
   if (loading && !cotizacion) {
     return (
-      <div className={`rounded-lg border border-hmc-border bg-hmc-gray2 ${compacta ? 'p-3' : 'p-4'}`}>
+      <div className={`rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 ${compacta ? 'p-3' : 'p-4'}`}>
         <div className="h-10 animate-pulse rounded bg-hmc-gray3" />
       </div>
     )
   }
   if (!cotizacion) {
     return (
-      <div className={`rounded-lg border border-hmc-border bg-hmc-gray2 ${compacta ? 'p-3' : 'p-4'}`}>
+      <div className={`rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 ${compacta ? 'p-3' : 'p-4'}`}>
         <p className="text-sm text-hmc-muted">No se pudo obtener la cotización.</p>
       </div>
     )
   }
   return (
-    <div className={`flex items-center justify-between gap-4 rounded-lg border border-hmc-border bg-hmc-gray2 ${compacta ? 'p-3' : 'p-4'}`}>
+    <div className={`flex items-center justify-between gap-4 rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 ${compacta ? 'p-3' : 'p-4'}`}>
       <div className="flex items-center gap-6">
         <div>
           <p className="text-[10px] uppercase tracking-wide text-hmc-muted">Dólar {cotizacion.nombre}</p>
@@ -283,7 +283,7 @@ export default function Productos() {
           {loading ? (
             <p className="text-sm text-hmc-muted">Cargando…</p>
           ) : filtrados.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-hmc-border bg-hmc-gray2 px-6 py-16 text-center">
+            <div className="flex flex-col items-center justify-center rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 px-6 py-16 text-center">
               <TbBike size={40} className="mb-3 text-hmc-muted" />
               <p className="text-sm text-hmc-muted">No hay productos en esta categoría</p>
               <button type="button" onClick={() => setProdModal({ producto: null })} className="mt-4 inline-flex items-center gap-2 rounded-md bg-hmc-white px-4 py-2 text-sm font-semibold text-hmc-black hover:opacity-90">
@@ -352,7 +352,7 @@ function ProductoCard({ p, cotizacion, onOpen, onEdit, onDelete }) {
   return (
     <div
       onClick={onOpen}
-      className="group cursor-pointer overflow-hidden rounded-lg border border-hmc-border bg-hmc-gray2 transition-all hover:border-[#555] active:scale-[0.99]"
+      className="group cursor-pointer overflow-hidden rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 transition-all hover:border-[#555] active:scale-[0.99]"
     >
       <div className="relative flex aspect-video items-center justify-center" style={{ backgroundColor: `${color}22` }}>
         {p.foto_url ? <img src={p.foto_url} alt="" className="h-full w-full object-cover" /> : <TbBike size={36} style={{ color }} />}
@@ -382,7 +382,7 @@ function ProductoCard({ p, cotizacion, onOpen, onEdit, onDelete }) {
 
 function ProductoTabla({ productos, cotizacion, onOpen, onEdit, onDelete }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-hmc-border bg-hmc-gray2">
+    <div className="overflow-hidden rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30">
       <div className="grid grid-cols-[48px_2fr_1fr_1fr_1fr_auto_auto] items-center gap-3 border-b border-hmc-border px-4 py-2.5 text-xs uppercase tracking-wide text-hmc-muted">
         <span />
         <span>Nombre</span>

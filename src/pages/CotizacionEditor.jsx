@@ -376,7 +376,7 @@ export default function CotizacionEditor() {
         {/* Columna izquierda */}
         <div className="min-w-0 flex-1">
           {/* Cliente */}
-          <section className="mb-5 rounded-lg border border-hmc-border bg-hmc-gray2 p-4">
+          <section className="mb-5 rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xs uppercase tracking-wide text-hmc-muted">Cliente</h2>
               <button type="button" onClick={() => setCliModal(true)} className="text-xs text-hmc-muted hover:text-hmc-white">{clienteNombre ? 'Cambiar' : 'Asignar cliente'}</button>
@@ -399,7 +399,7 @@ export default function CotizacionEditor() {
           </section>
 
           {/* Items */}
-          <section className="mb-5 rounded-lg border border-hmc-border bg-hmc-gray2 p-4">
+          <section className="mb-5 rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-4">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-xs uppercase tracking-wide text-hmc-muted">Items de la cotización</h2>
               <div className="flex gap-2">
@@ -424,20 +424,20 @@ export default function CotizacionEditor() {
           </section>
 
           {/* Notas */}
-          <section className="rounded-lg border border-hmc-border bg-hmc-gray2 p-4">
+          <section className="rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-4">
             <h2 className="mb-2 text-xs uppercase tracking-wide text-hmc-muted">Notas</h2>
             <textarea rows={6} value={notas} onChange={(e) => setNotas(e.target.value)} className={`${inputBase} w-full resize-y min-h-[120px]`} placeholder={'Notas internas o aclaraciones para el cliente…'} />
           </section>
 
           {/* Condiciones de pago */}
-          <section className="rounded-lg border border-hmc-border bg-hmc-gray2 p-4">
+          <section className="rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-4">
             <h2 className="mb-1 text-xs uppercase tracking-wide text-hmc-muted">Condiciones de pago</h2>
             <p className="mb-2 text-xs text-hmc-muted/70">Se guarda como predeterminado para próximas cotizaciones. Editable acá.</p>
             <textarea rows={4} value={condPago} onChange={(e) => setCondPago(e.target.value)} className={`${inputBase} w-full resize-y min-h-[90px]`} placeholder={'Ej: 50% de anticipo y 50% contra entrega. Transferencia o efectivo.'} />
           </section>
 
           {/* Condiciones generales */}
-          <section className="rounded-lg border border-hmc-border bg-hmc-gray2 p-4">
+          <section className="rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-4">
             <h2 className="mb-1 text-xs uppercase tracking-wide text-hmc-muted">Condiciones generales</h2>
             <p className="mb-2 text-xs text-hmc-muted/70">Se guarda como predeterminado para próximas cotizaciones. Editable acá.</p>
             <textarea rows={4} value={condGenerales} onChange={(e) => setCondGenerales(e.target.value)} className={`${inputBase} w-full resize-y min-h-[90px]`} placeholder={'Ej: Precios sujetos a cambio. Plazo de producción 30 días hábiles.'} />
@@ -448,7 +448,7 @@ export default function CotizacionEditor() {
         <div className="w-full shrink-0 lg:w-[320px]">
           <div className="sticky top-4 flex flex-col gap-4">
             {/* Dólar */}
-            <div className="rounded-lg border border-hmc-border bg-hmc-gray2 p-4">
+            <div className="rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-4">
               {dolarLoading && !dolar ? (
                 <div className="h-6 animate-pulse rounded bg-hmc-gray3" />
               ) : dolar ? (
@@ -499,7 +499,7 @@ export default function CotizacionEditor() {
             </div>
 
             {/* Configuración */}
-            <div className="rounded-lg border border-hmc-border bg-hmc-gray2 p-4">
+            <div className="rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-4">
               <h2 className="mb-3 text-xs uppercase tracking-wide text-hmc-muted">Configuración</h2>
               <div className="mb-3">
                 <label className={labelClass}>Validez (días)</label>
@@ -522,7 +522,7 @@ export default function CotizacionEditor() {
             </div>
 
             {/* Oportunidad CRM */}
-            <div className="rounded-lg border border-hmc-border bg-hmc-gray2 p-4">
+            <div className="rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-4">
               <h2 className="mb-3 text-xs uppercase tracking-wide text-hmc-muted">Oportunidad CRM</h2>
               {cot.oportunidad ? (
                 <div>
@@ -542,7 +542,7 @@ export default function CotizacionEditor() {
             </div>
 
             {/* Cobro */}
-            <div className="rounded-lg border border-hmc-border bg-hmc-gray2 p-4">
+            <div className="rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-4">
               <h2 className="mb-3 text-xs uppercase tracking-wide text-hmc-muted">Cobro</h2>
               {cot.cobrada ? (
                 <div className="rounded-md p-3" style={{ backgroundColor: '#4a990814', border: '1px solid #4a990830' }}>
@@ -564,7 +564,7 @@ export default function CotizacionEditor() {
             </div>
 
             {/* Acciones */}
-            <div className="flex flex-col gap-2 rounded-lg border border-hmc-border bg-hmc-gray2 p-4">
+            <div className="flex flex-col gap-2 rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-4">
               <button type="button" onClick={guardar} disabled={saving} className="inline-flex items-center justify-center gap-2 rounded-md bg-hmc-white px-4 py-2 text-sm font-semibold text-hmc-black hover:opacity-90 disabled:opacity-60"><TbDeviceFloppy size={16} />{saving ? 'Guardando…' : 'Guardar cambios'}</button>
               {msg && <p className="text-center text-xs" style={{ color: '#44aa99' }}>{msg}</p>}
               <button type="button" onClick={descargarPDF} className="inline-flex items-center justify-center gap-2 rounded-md border border-hmc-border px-4 py-2 text-sm text-hmc-white hover:bg-hmc-gray3"><TbDownload size={16} />Descargar PDF</button>
@@ -675,7 +675,7 @@ function ConfirmarCobroModal({ cot, dolar, tcActual, onClose, onConfirmado }) {
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4" onMouseDown={onClose}>
       <div
-        className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-lg border border-hmc-border bg-hmc-gray2 shadow-xl"
+        className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-xl shadow-black/40"
         style={{ borderTop: '2px solid #44aa99' }}
         onMouseDown={(e) => e.stopPropagation()}
       >
@@ -757,7 +757,7 @@ function ConfirmarCobroModal({ cot, dolar, tcActual, onClose, onConfirmado }) {
 function ConfirmarAsignacion({ titulo, onSi, onNo }) {
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4" onMouseDown={onNo}>
-      <div className="w-full max-w-sm rounded-lg border border-hmc-border bg-hmc-gray2 p-6 shadow-xl" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-sm rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-6 shadow-xl" onMouseDown={(e) => e.stopPropagation()}>
         <h2 className="text-lg font-semibold text-hmc-white">¿Asignar a oportunidad?</h2>
         <p className="mt-2 text-sm text-hmc-muted">
           Esta cotización fue creada desde la oportunidad “{titulo}”. ¿Querés asignarla?
@@ -873,7 +873,7 @@ function CatalogoModal({ tc, onClose, onAgregar }) {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4" onMouseDown={onClose}>
-      <div className="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-lg border border-hmc-border bg-hmc-gray2 shadow-xl" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-xl shadow-black/40" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-hmc-border px-6 py-4">
           <h2 className="text-lg font-semibold text-hmc-white">Agregar del catálogo</h2>
           <button type="button" onClick={onClose} className="text-hmc-muted hover:text-hmc-white"><TbX size={20} /></button>
@@ -947,7 +947,7 @@ function ClienteModal({ onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4" onMouseDown={onClose}>
-      <div className="w-full max-w-md rounded-lg border border-hmc-border bg-hmc-gray2 shadow-xl" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-md rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-xl shadow-black/40" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-hmc-border px-6 py-4">
           <h2 className="text-lg font-semibold text-hmc-white">Asignar cliente</h2>
           <button type="button" onClick={onClose} className="text-hmc-muted hover:text-hmc-white"><TbX size={20} /></button>

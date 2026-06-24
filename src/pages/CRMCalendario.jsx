@@ -393,7 +393,7 @@ function FiltrosDropdown({ fuentes, setFuentes, tipos, setTipos, estados, setEst
   return (
     <>
       <div className="fixed inset-0 z-20" onClick={onClose} />
-      <div className="absolute right-0 z-30 mt-2 w-56 rounded-lg border border-hmc-border bg-hmc-gray2 p-3 shadow-xl">
+      <div className="absolute right-0 z-30 mt-2 w-56 rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-3 shadow-xl">
         <p className="mb-1 text-[10px] uppercase tracking-wide text-hmc-muted">Fuente</p>
         <Check checked={fuentes.has('crm')} onChange={() => toggleSet(setFuentes, 'crm')} label="CRM" />
         <Check checked={fuentes.has('campana')} onChange={() => toggleSet(setFuentes, 'campana')} label="Campañas" />
@@ -573,7 +573,7 @@ function ActividadCalModal({ actividad, fechaInicial, onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 px-4" onMouseDown={onClose}>
-      <div className="w-full max-w-md rounded-lg border border-hmc-border bg-hmc-gray2 shadow-xl" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-md rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-xl shadow-black/40" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-hmc-border px-6 py-4">
           <h2 className="text-lg font-semibold text-hmc-white">{actividad ? 'Editar actividad' : 'Nueva actividad'}</h2>
           <button type="button" onClick={onClose} className="text-hmc-muted hover:text-hmc-white"><TbX size={20} /></button>

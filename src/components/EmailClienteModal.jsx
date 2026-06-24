@@ -161,7 +161,7 @@ export default function EmailClienteModal({ cliente, campana, onClose, onSaved }
       onMouseDown={onClose}
     >
       <div
-        className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-lg border border-hmc-border bg-hmc-gray2 shadow-xl"
+        className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-xl shadow-black/40"
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -235,7 +235,7 @@ export default function EmailClienteModal({ cliente, campana, onClose, onSaved }
               </select>
             </div>
 
-            <div className="overflow-hidden rounded-lg border border-hmc-border bg-hmc-gray2">
+            <div className="overflow-hidden rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30">
               <EmailHeader />
               <div className="flex flex-col gap-2 p-4">
                 {bloques.length === 0 ? (

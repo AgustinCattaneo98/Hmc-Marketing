@@ -204,7 +204,7 @@ export default function ImportModal({ tipo, empresas = [], categorias = [], onCl
       onMouseDown={onClose}
     >
       <div
-        className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg border border-hmc-border bg-hmc-gray2 shadow-xl"
+        className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-xl shadow-black/40"
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Header */}

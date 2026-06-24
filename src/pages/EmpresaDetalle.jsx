@@ -313,7 +313,7 @@ export default function EmpresaDetalle() {
       </div>
 
       {/* Información */}
-      <section className="mb-8 rounded-lg border border-hmc-border bg-hmc-gray2 p-6">
+      <section className="mb-8 rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-6">
         <h2 className="mb-4 text-sm uppercase tracking-wide text-hmc-muted">
           Información
         </h2>
@@ -330,7 +330,7 @@ export default function EmpresaDetalle() {
       </section>
 
       {/* Contactos */}
-      <section className="rounded-lg border border-hmc-border bg-hmc-gray2 p-6">
+      <section className="rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm uppercase tracking-wide text-hmc-muted">
             Contactos
@@ -438,7 +438,7 @@ export default function EmpresaDetalle() {
           onMouseDown={cerrarFlujo}
         >
           <div
-            className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-lg border border-hmc-border bg-hmc-gray2 shadow-xl"
+            className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-xl shadow-black/40"
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-hmc-border px-6 py-4">

@@ -289,7 +289,7 @@ function Sel({ value, onChange, placeholder, opts }) {
 
 function StatCard({ icon: Icon, color, valor, label, alerta, small }) {
   return (
-    <div className="relative rounded-lg border border-hmc-border bg-hmc-gray2 p-4" style={alerta ? { backgroundColor: '#e24b4a0d' } : {}}>
+    <div className="relative rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-4" style={alerta ? { backgroundColor: '#e24b4a0d' } : {}}>
       <Icon size={26} style={{ color }} className="absolute right-3 top-3 opacity-80" />
       <p className={`font-bold leading-none text-hmc-white ${small ? 'text-lg' : 'text-2xl'}`}>{valor}</p>
       <p className="mt-1.5 text-[11px] uppercase tracking-wide text-hmc-muted">{label}</p>
@@ -314,7 +314,7 @@ function ActRow({ act, onToggle, onEdit, onEliminar, onIr, compacta }) {
   return (
     <div
       onClick={() => onEdit(act)}
-      className={`group flex cursor-pointer items-start gap-3 rounded-lg border border-hmc-border bg-hmc-gray2 px-3.5 py-3 transition-colors hover:border-[#555] hover:bg-hmc-gray3/40 ${completada ? 'opacity-50' : ''}`}
+      className={`group flex cursor-pointer items-start gap-3 rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 px-3.5 py-3 transition-colors hover:border-[#555] hover:bg-hmc-gray3/40 ${completada ? 'opacity-50' : ''}`}
       style={vencidaGrp ? { borderLeft: '2px solid #e24b4a' } : grupoDe(act) === 'hoy' ? { borderLeft: '2px solid #e8b87f' } : {}}
     >
       <button
@@ -385,7 +385,7 @@ function TabLista({ actividades, mostrarCompletadas, setMostrarCompletadas, onTo
       </div>
 
       {visibles.length === 0 ? (
-        <div className="rounded-lg border border-hmc-border bg-hmc-gray2 px-6 py-12 text-center text-sm text-hmc-muted">No hay actividades.</div>
+        <div className="rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 px-6 py-12 text-center text-sm text-hmc-muted">No hay actividades.</div>
       ) : (
         <div className="flex flex-col gap-4">
           {GRUPOS.filter((g) => porGrupo[g.key]?.length).map((g) => (
@@ -451,7 +451,7 @@ function OportunidadGrupo({ op, acts, onToggle, onEdit, onNueva, onIr }) {
   const pct = acts.length ? Math.round((completadas / acts.length) * 100) : 0
 
   return (
-    <div className="rounded-lg border border-hmc-border bg-hmc-gray2">
+    <div className="rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30">
       <div className="flex items-center gap-3 p-3">
         <button type="button" onClick={() => setAbierto((v) => !v)} className="min-w-0 flex-1 text-left">
           <div className="flex items-center gap-2">
@@ -503,7 +503,7 @@ function TabKanban({ actividades, onMover, onEdit, onIr }) {
 function KanbanCol({ col, cards, onEdit, onIr }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.key })
   return (
-    <div className="flex w-[230px] min-w-[230px] shrink-0 flex-col rounded-lg border border-hmc-border bg-hmc-gray2">
+    <div className="flex w-[230px] min-w-[230px] shrink-0 flex-col rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30">
       <div className="flex items-center justify-between px-3 py-2.5">
         <span className="text-xs font-medium uppercase tracking-wide text-hmc-white">{col.label}</span>
         <span className="rounded bg-hmc-gray3 px-1.5 py-0.5 text-xs text-hmc-muted">{cards.length}</span>

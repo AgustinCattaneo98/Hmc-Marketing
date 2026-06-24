@@ -223,7 +223,7 @@ export default function ProductoDetalle() {
       </div>
 
       {/* Card dólar compacta */}
-      <div className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-hmc-border bg-hmc-gray2 p-3">
+      <div className="mb-6 flex items-center justify-between gap-4 rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-3">
         {dolarLoading && !cotizacion ? (
           <div className="h-6 w-40 animate-pulse rounded bg-hmc-gray3" />
         ) : cotizacion ? (
@@ -240,7 +240,7 @@ export default function ProductoDetalle() {
       </div>
 
       {/* Variantes */}
-      <section className="mb-6 rounded-lg border border-hmc-border bg-hmc-gray2 p-6">
+      <section className="mb-6 rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm uppercase tracking-wide text-hmc-muted">Variantes</h2>
           <button type="button" onClick={() => setVarModal({ variante: null })} className="inline-flex items-center gap-2 rounded-md border border-hmc-border px-3 py-1.5 text-sm text-hmc-white hover:bg-hmc-gray3"><TbPlus size={16} />Agregar variante</button>
@@ -375,7 +375,7 @@ function VarianteModal({ variante, moneda, cotizacion, onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4" onMouseDown={onClose}>
-      <div className="w-full max-w-md rounded-lg border border-hmc-border bg-hmc-gray2 shadow-xl" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-md rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-xl shadow-black/40" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-hmc-border px-6 py-4">
           <h2 className="text-lg font-semibold text-hmc-white">{variante ? 'Editar variante' : 'Nueva variante'}</h2>
           <button type="button" onClick={onClose} className="text-hmc-muted hover:text-hmc-white" aria-label="Cerrar"><TbX size={20} /></button>

@@ -465,7 +465,7 @@ export default function Empresas() {
       )}
 
       {/* Contenido */}
-      <div className="overflow-hidden rounded-lg border border-hmc-border bg-hmc-gray2">
+      <div className="overflow-hidden rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30">
         {/* Encabezado de tabla */}
         <div className="grid grid-cols-[36px_48px_2fr_140px_160px_120px_80px_80px] items-center gap-4 border-b border-hmc-border px-5 py-2.5 text-xs uppercase tracking-wide text-hmc-muted">
           <span className="flex items-center">

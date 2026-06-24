@@ -255,7 +255,7 @@ export default function CRMDetalle() {
       </div>
 
       {/* Info */}
-      <section className="mb-6 rounded-lg border border-hmc-border bg-hmc-gray2 p-6">
+      <section className="mb-6 rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-6">
         <h2 className="mb-4 text-sm uppercase tracking-wide text-hmc-muted">Info</h2>
         <div className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2">
           {/* Empresa */}
@@ -365,7 +365,7 @@ export default function CRMDetalle() {
       </section>
 
       {/* Cotizaciones */}
-      <section className="mb-6 rounded-lg border border-hmc-border bg-hmc-gray2 p-6">
+      <section className="mb-6 rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-6">
         <div className="mb-4 flex items-center justify-between gap-3">
           <h2 className="text-sm uppercase tracking-wide text-hmc-muted">Cotizaciones</h2>
           <button type="button" onClick={() => setCotModal(true)} className="inline-flex items-center gap-2 rounded-md border border-hmc-border px-3 py-1.5 text-sm text-hmc-white hover:bg-hmc-gray3"><TbPlus size={16} />Nueva cotización</button>
@@ -399,7 +399,7 @@ export default function CRMDetalle() {
       </section>
 
       {/* Actividades */}
-      <section className="mb-6 rounded-lg border border-hmc-border bg-hmc-gray2 p-6">
+      <section className="mb-6 rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-6">
         <div className="mb-4 flex items-center justify-between gap-3">
           <h2 className="text-sm uppercase tracking-wide text-hmc-muted">Actividades</h2>
           <button
@@ -445,7 +445,7 @@ export default function CRMDetalle() {
       </section>
 
       {/* Historial */}
-      <section className="rounded-lg border border-hmc-border bg-hmc-gray2 p-6">
+      <section className="rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-6">
         <h2 className="mb-4 text-sm uppercase tracking-wide text-hmc-muted">Historial</h2>
         <div className="flex flex-col gap-3">
           {historial.map((h, i) => (

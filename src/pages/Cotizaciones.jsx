@@ -127,7 +127,7 @@ export default function Cotizaciones() {
       </div>
 
       {/* Card dólar */}
-      <div className="mb-4 flex items-center justify-between gap-4 rounded-lg border border-hmc-border bg-hmc-gray2 p-3">
+      <div className="mb-4 flex items-center justify-between gap-4 rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-3">
         {dolarLoading && !dolar ? (
           <div className="h-6 w-40 animate-pulse rounded bg-hmc-gray3" />
         ) : dolar ? (
@@ -165,7 +165,7 @@ export default function Cotizaciones() {
       {loading ? (
         <p className="text-sm text-hmc-muted">Cargando…</p>
       ) : filtradas.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-hmc-border bg-hmc-gray2 px-6 py-16 text-center">
+        <div className="flex flex-col items-center justify-center rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 px-6 py-16 text-center">
           <TbFileInvoice size={40} className="mb-3 text-hmc-muted" />
           <p className="text-sm text-hmc-muted">No hay cotizaciones</p>
           <button type="button" onClick={() => setModal(true)} className="mt-4 inline-flex items-center gap-2 rounded-md bg-hmc-white px-4 py-2 text-sm font-semibold text-hmc-black hover:opacity-90">
@@ -308,7 +308,7 @@ function NuevaCotizacionModal({ onClose, onCreated, dolar }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4" onMouseDown={onClose}>
-      <div className="w-full max-w-md rounded-lg border border-hmc-border bg-hmc-gray2 shadow-xl" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-md rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-xl shadow-black/40" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-hmc-border px-6 py-4">
           <h2 className="text-lg font-semibold text-hmc-white">Nueva cotización</h2>
           <button type="button" onClick={onClose} className="text-hmc-muted hover:text-hmc-white"><TbX size={20} /></button>

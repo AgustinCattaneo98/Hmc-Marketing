@@ -794,7 +794,7 @@ function EstadoConexion({ conectado }) {
 
 function IntegracionCard({ titulo, conectado, children }) {
   return (
-    <div className="mb-3 rounded-lg border border-hmc-border bg-hmc-gray2 p-4">
+    <div className="mb-3 rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-4">
       <div className="mb-4 flex items-center justify-between">
         <h4 className="font-medium text-hmc-white">{titulo}</h4>
         {conectado !== undefined && <EstadoConexion conectado={conectado} />}
@@ -1082,7 +1082,7 @@ function TabIntegraciones({ showToast }) {
       </IntegracionCard>
 
       {/* OTROS / FUTUROS */}
-      <div className="mb-3 rounded-lg border border-hmc-border bg-hmc-gray2 p-4">
+      <div className="mb-3 rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-4">
         <button
           type="button"
           onClick={() => setOtrosAbierto((v) => !v)}
