@@ -137,7 +137,7 @@ export default function SegmentosInput({ value = [], onChange, placeholder = 'Bu
 
       {/* Dropdown de sugerencias / crear */}
       {open && (sugerencias.length > 0 || puedeCrear) && (
-        <div className="absolute z-10 mt-1 max-h-52 w-full overflow-y-auto glass-input py-1 shadow-xl">
+        <div className="absolute z-10 mt-1 max-h-52 w-full overflow-y-auto rounded-[10px] border border-white/10 bg-[#1a1a1a] py-1 shadow-[0_8px_24px_rgba(0,0,0,0.5)]">
           {sugerencias.map((s) => (
             <button
               key={s.id}
