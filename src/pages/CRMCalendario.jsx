@@ -315,7 +315,7 @@ export default function CRMCalendario() {
             </div>
           </div>
 
-          <div className="relative min-h-0 flex-1">
+          <div className="relative min-h-0 flex-1 overflow-hidden rounded-lg border border-hmc-border">
             {loading && (
               <div className="pointer-events-none absolute inset-0 z-10 flex items-start justify-center pt-4">
                 <span className="rounded-full bg-hmc-gray2 px-3 py-1 text-xs text-hmc-muted">Cargando…</span>
