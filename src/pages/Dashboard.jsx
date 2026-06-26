@@ -1,38 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from 'recharts'
-import {
-  TbBuilding,
-  TbUsers,
-  TbTrophyFilled,
-  TbCurrencyDollar,
-  TbFileInvoice,
-  TbCheckbox,
-  TbCircleCheck,
-  TbAlertCircle,
-  TbCash,
-} from 'react-icons/tb'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { TbCurrencyDollar, TbTargetArrow, TbFileInvoice, TbArrowRight } from 'react-icons/tb'
 import { useDashboard } from '../hooks/useDashboard'
 import { useDolar } from '../hooks/useDolar'
-import { toggleActividadCRM } from '../lib/db'
-import { iniciales, saludo, formatFechaLarga, tiempoRelativo } from '../lib/utils'
+import { saludo, formatFechaLarga } from '../lib/utils'
 import { formatUSD, formatARS } from '../lib/dolar'
 import { ETAPA_MAP } from '../lib/crm'
 import { TIPO_ACTIVIDAD_MAP } from '../lib/campanas'
-import { ESTADOS_COT } from '../lib/cotizaciones'
 import { STORAGE, DEFAULT_PERFIL, loadJSON, loadStr } from '../lib/settings'
-import { SegmentoPills } from '../components/SegmentoPill'
 
 const COVER_KEY = 'hmc_dashboard_cover'
 const PERIODOS = [
@@ -41,6 +17,8 @@ const PERIODOS = [
   { value: 'mes', label: 'Mes' },
   { value: 'año', label: 'Año' },
 ]
+
+const tituloSeccion = 'mb-3 text-xs font-semibold uppercase tracking-widest text-[#555]'
 
 const TOOLTIP_STYLE = {
   backgroundColor: '#1e1e1e',
@@ -51,15 +29,28 @@ const TOOLTIP_STYLE = {
 }
 const AXIS_TICK = { fill: '#777777', fontSize: 11 }
 
-function venceTexto(fecha) {
-  const diff = new Date(fecha).getTime() - Date.now()
-  const vencida = diff < 0
-  const h = Math.abs(Math.floor(diff / 3600000))
-  const d = Math.abs(Math.floor(diff / 86400000))
-  const txt = vencida
-    ? d > 0 ? `Vencida hace ${d} días` : `Vencida hace ${h} h`
-    : d > 0 ? `Vence en ${d} días` : `Vence en ${h} h`
-  return { txt, vencida }
+// Total del pipeline (oportunidades activas, no perdidas) en la moneda elegida.
+function pipelineTotal(m, dolar, moneda) {
+  const usdN = m?.pipelineUsd ?? 0
+  const arsN = m?.pipelineArs ?? 0
+  const venta = dolar?.venta
+  if (moneda === 'USD') return formatUSD(usdN + (venta ? arsN / venta : 0))
+  return formatARS(arsN + (venta ? usdN * venta : 0))
+}
+
+function diasDesde(fecha) {
+  return Math.max(0, Math.floor((Date.now() - new Date(fecha).getTime()) / 86400000))
+}
+
+function relativoFuturo(fecha) {
+  const inicioHoy = new Date()
+  inicioHoy.setHours(0, 0, 0, 0)
+  const d = new Date(fecha)
+  d.setHours(0, 0, 0, 0)
+  const dias = Math.round((d - inicioHoy) / 86400000)
+  if (dias <= 0) return 'Hoy'
+  if (dias === 1) return 'Mañana'
+  return `En ${dias} días`
 }
 
 export default function Dashboard() {
@@ -67,20 +58,50 @@ export default function Dashboard() {
   const [periodo, setPeriodo] = useState('mes')
   const [moneda, setMoneda] = useState('ARS')
   const cover = loadStr(COVER_KEY)
-  const { data, loading, error, refetch } = useDashboard(periodo)
+  const { data, loading } = useDashboard(periodo)
   const { cotizacion: dolar } = useDolar()
 
   const perfil = loadJSON(STORAGE.perfil, DEFAULT_PERFIL)
   const nombre = perfil.nombre || 'Agustín'
   const rol = perfil.rol || 'Representante HMC · Córdoba'
-
-  async function toggleActividad(act) {
-    await toggleActividadCRM(act.id, act.estado !== 'completada')
-    refetch()
-  }
-
   const fechaLarga = formatFechaLarga(new Date())
   const fechaCap = fechaLarga.charAt(0).toUpperCase() + fechaLarga.slice(1)
+
+  const m = data?.metricas ?? {}
+  const pendientes = data?.pendientes ?? []
+  const oportunidades = data?.oportunidadesActivas ?? []
+  const cotizaciones = data?.cotizacionesEnviadas ?? []
+
+  // Actividades de HOY / vencidas y PRÓXIMAS (a partir de los pendientes ya cargados)
+  const inicioHoy = new Date()
+  inicioHoy.setHours(0, 0, 0, 0)
+  const finHoy = new Date()
+  finHoy.setHours(23, 59, 59, 999)
+  const hoyYVencidas = pendientes.filter(
+    (a) => a.fecha_vencimiento && new Date(a.fecha_vencimiento) <= finHoy
+  )
+  const proximas = pendientes
+    .filter((a) => a.fecha_vencimiento && new Date(a.fecha_vencimiento) > finHoy)
+    .slice(0, 3)
+
+  function ActividadRow({ a, badge }) {
+    const tipo = TIPO_ACTIVIDAD_MAP[a.tipo] ?? TIPO_ACTIVIDAD_MAP.tarea
+    const Icon = tipo.icon
+    return (
+      <button
+        type="button"
+        onClick={() => navigate('/crm/calendario')}
+        className="flex w-full items-start gap-3 rounded-lg px-1.5 py-2 text-left transition-colors hover:bg-white/5"
+      >
+        <Icon size={16} style={{ color: tipo.color }} className="mt-0.5 shrink-0" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm text-white">{a.titulo}</p>
+          {a.oportunidad?.titulo && <p className="truncate text-xs text-[#666]">{a.oportunidad.titulo}</p>}
+        </div>
+        {badge}
+      </button>
+    )
+  }
 
   return (
     <div className="-m-8">
@@ -132,14 +153,8 @@ export default function Dashboard() {
       </div>
 
       {/* CONTENIDO */}
-      <div className="flex flex-col gap-6 p-6">
-        {error && (
-          <p className="rounded-md border border-red-900/50 bg-red-950/30 px-4 py-2.5 text-sm text-red-400">
-            No se pudieron cargar algunos datos del dashboard.
-          </p>
-        )}
-
-        {/* Selector de moneda (afecta Valor Pipeline y Ventas cobradas) */}
+      <div className="p-6">
+        {/* Selector de moneda */}
         <div className="mb-4 flex items-center justify-end gap-2">
           <span className="text-xs text-hmc-muted">Moneda</span>
           <div className="inline-flex overflow-hidden rounded-md border border-hmc-border">
@@ -158,359 +173,174 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Métricas */}
-        <Metricas data={data} loading={loading} dolar={dolar} moneda={moneda} />
-
-        {/* Dos columnas */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_340px]">
-          <div className="flex flex-col gap-4">
-            <Card titulo="Pipeline CRM" badge={PERIODOS.find((p) => p.value === periodo)?.label}>
-              {loading ? (
-                <SkeletonBox h={200} />
-              ) : (
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={data?.pipeline ?? []} layout="vertical" margin={{ left: 10, right: 10 }}>
-                    <CartesianGrid stroke="#2e2e2e" horizontal={false} />
-                    <XAxis type="number" tick={AXIS_TICK} stroke="#2e2e2e" allowDecimals={false} />
-                    <YAxis type="category" dataKey="label" tick={AXIS_TICK} stroke="#2e2e2e" width={110} />
-                    <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: '#2a2a2a55' }} />
-                    <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                      {(data?.pipeline ?? []).map((e) => (
-                        <Cell key={e.etapa} fill={e.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </Card>
-
-            <Card titulo="Actividad del período">
-              {loading ? (
-                <SkeletonBox h={180} />
-              ) : (
-                <ResponsiveContainer width="100%" height={180}>
-                  <LineChart data={data?.actividad ?? []} margin={{ left: -10, right: 10, top: 5 }}>
-                    <CartesianGrid stroke="#2e2e2e" />
-                    <XAxis dataKey="label" tick={AXIS_TICK} stroke="#2e2e2e" />
-                    <YAxis tick={AXIS_TICK} stroke="#2e2e2e" allowDecimals={false} />
-                    <Tooltip contentStyle={TOOLTIP_STYLE} />
-                    <Line type="monotone" dataKey="empresas" stroke="#7fb8e8" strokeWidth={2} dot={false} name="Empresas" />
-                    <Line type="monotone" dataKey="contactos" stroke="#a8d88a" strokeWidth={2} dot={false} name="Contactos" />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
-            </Card>
+        {/* ZONA 1 — Métricas (3 cards) */}
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="glass-card p-5">
+            <div className="flex items-start justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#666]">Pipeline total</p>
+              <TbCurrencyDollar size={18} className="text-[#555]" />
+            </div>
+            <p className="mt-3 text-[26px] font-bold leading-none text-white">
+              {loading ? '—' : pipelineTotal(m, dolar, moneda)}
+            </p>
+            <p className="mt-1.5 text-[11px] text-[#666]">en oportunidades activas</p>
           </div>
 
-          <div className="flex flex-col gap-4">
-            <Pendientes data={data} loading={loading} onToggle={toggleActividad} onIr={(id) => navigate(`/crm/${id}`)} />
-            <EnProceso data={data} loading={loading} onIr={(id) => navigate(`/crm/${id}`)} />
-          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/crm')}
+            className="glass-card p-5 text-left transition-colors hover:bg-white/[0.06]"
+          >
+            <div className="flex items-start justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#666]">Oportunidades activas</p>
+              <TbTargetArrow size={18} className="text-[#555]" />
+            </div>
+            <p className="mt-3 text-[28px] font-bold leading-none text-white">{loading ? '—' : oportunidades.length}</p>
+            <p className="mt-1.5 text-[11px] text-[#666]">en curso</p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate('/cotizaciones')}
+            className="glass-card p-5 text-left transition-colors hover:bg-white/[0.06]"
+          >
+            <div className="flex items-start justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#666]">Cotizaciones sin respuesta</p>
+              <TbFileInvoice size={18} className="text-[#555]" />
+            </div>
+            <p className="mt-3 text-[28px] font-bold leading-none text-white">{loading ? '—' : cotizaciones.length}</p>
+            <p className="mt-1.5 text-[11px] text-[#666]">esperando respuesta</p>
+          </button>
         </div>
 
-        {/* Fila inferior */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <UltimasEmpresas data={data} loading={loading} onVerTodas={() => navigate('/empresas')} onIr={(id) => navigate(`/empresas/${id}`)} />
-          <CotizacionesRecientes data={data} loading={loading} onIr={(id) => navigate(`/cotizaciones/${id}`)} />
-          <ResumenProductos data={data} loading={loading} onVer={() => navigate('/productos')} />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ---------- Componentes ----------
-// Estilo de card tipo iOS: esquinas muy redondeadas, degradado sutil,
-// hairline claro (ring) y sombra suave en vez del borde duro.
-const cardClass = 'glass-card p-5'
-
-function Card({ titulo, badge, children, accion }) {
-  return (
-    <div className={cardClass}>
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-medium text-hmc-white">{titulo}</h2>
-        {badge && <span className="rounded bg-hmc-gray3 px-2 py-0.5 text-[10px] uppercase tracking-wide text-hmc-muted">{badge}</span>}
-        {accion}
-      </div>
-      {children}
-    </div>
-  )
-}
-
-function SkeletonBox({ h }) {
-  return <div className="w-full animate-pulse rounded bg-hmc-gray3" style={{ height: h }} />
-}
-
-const METRICAS_CFG = [
-  { key: 'empresas', label: 'Nuevas empresas', icon: TbBuilding, color: '#7fb8e8', sub: () => 'empresas registradas' },
-  { key: 'contactos', label: 'Nuevos contactos', icon: TbUsers, color: '#a8d88a', sub: () => 'contactos agregados' },
-  { key: 'ganadas', label: 'Oportunidades cerradas', icon: TbTrophyFilled, color: '#44aa99', sub: () => 'ventas cerradas' },
-  { key: 'pipeline', label: 'Valor pipeline', icon: TbCurrencyDollar, color: '#e8b87f', sub: () => 'en oportunidades activas' },
-  { key: 'cotizaciones', label: 'Cotizaciones enviadas', icon: TbFileInvoice, color: '#c8a8e8', sub: () => 'presupuestos enviados' },
-  {
-    key: 'pendientes',
-    label: 'Actividades pendientes',
-    icon: TbCheckbox,
-    color: (v) => (v > 0 ? '#e24b4a' : '#44aa99'),
-    sub: (v) => (v > 0 ? '¡Tenés tareas vencidas!' : 'Al día 🎉'),
-  },
-  { key: 'ventas', label: 'Ventas cobradas', icon: TbCash, color: '#44aa99' },
-]
-
-// Total del pipeline convertido a la moneda elegida.
-function pipelineTotal(m, dolar, moneda) {
-  const usdN = m.pipelineUsd ?? 0
-  const arsN = m.pipelineArs ?? 0
-  const venta = dolar?.venta
-  if (moneda === 'USD') {
-    return formatUSD(usdN + (venta ? arsN / venta : 0))
-  }
-  return formatARS(arsN + (venta ? usdN * venta : 0))
-}
-
-function Metricas({ data, loading, dolar, moneda }) {
-  if (loading) {
-    return (
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-        {Array.from({ length: 7 }).map((_, i) => (
-          <div key={i} className={cardClass}>
-            <div className="h-10 animate-pulse rounded bg-hmc-gray3" />
-          </div>
-        ))}
-      </div>
-    )
-  }
-  const m = data?.metricas ?? {}
-  return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-      {METRICAS_CFG.map((cfg) => {
-        const esPipeline = cfg.key === 'pipeline'
-        const esVentas = cfg.key === 'ventas'
-        const valor = esPipeline || esVentas ? null : m[cfg.key] ?? 0
-        const color = typeof cfg.color === 'function' ? cfg.color(valor) : cfg.color
-        const Icon = cfg.icon
-        return (
-          <div key={cfg.key} className={`relative ${cardClass}`}>
-            <Icon size={28} style={{ color }} className="absolute right-3 top-3 opacity-80" />
-            <p className="text-[10px] uppercase tracking-wide text-hmc-muted">{cfg.label}</p>
-
-            {esVentas ? (
-              <>
-                <p className="mt-1 text-[28px] font-bold leading-none text-hmc-white">
-                  {moneda === 'USD'
-                    ? (m.ventasUsd ?? 0) > 0
-                      ? formatUSD(m.ventasUsd)
-                      : '—'
-                    : (m.ventasArs ?? 0) > 0
-                      ? formatARS(m.ventasArs)
-                      : '—'}
-                </p>
-                <p className="mt-1.5 text-[11px] text-hmc-muted">{m.ventasCount ?? 0} cobros</p>
-              </>
-            ) : esPipeline ? (
-              <>
-                <p className="mt-1 text-[26px] font-bold leading-none text-hmc-white">
-                  {pipelineTotal(m, dolar, moneda)}
-                </p>
-                <p className="mt-1.5 text-[11px] text-hmc-muted">Valor estimado</p>
-              </>
-            ) : (
-              <>
-                <p className="mt-1 text-[28px] font-bold leading-none text-hmc-white">{valor}</p>
-                <p className="mt-1.5 text-[11px] text-hmc-muted">{cfg.sub(valor)}</p>
-              </>
-            )}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-function Pendientes({ data, loading, onToggle, onIr }) {
-  const lista = data?.pendientes ?? []
-  return (
-    <Card titulo="Pendientes hoy" badge={loading ? undefined : String(lista.length)}>
-      {loading ? (
-        <div className="flex flex-col gap-2">
-          {Array.from({ length: 4 }).map((_, i) => <SkeletonBox key={i} h={28} />)}
-        </div>
-      ) : lista.length === 0 ? (
-        <div className="flex flex-col items-center py-6 text-center">
-          <TbCircleCheck size={32} className="mb-2 text-[#44aa99]" />
-          <p className="text-sm text-hmc-muted">¡Todo al día! Sin pendientes</p>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {lista.map((a) => {
-            const tipo = TIPO_ACTIVIDAD_MAP[a.tipo] ?? TIPO_ACTIVIDAD_MAP.tarea
-            const Icon = tipo.icon
-            const completada = a.estado === 'completada'
-            const v = a.fecha_vencimiento ? venceTexto(a.fecha_vencimiento) : null
-            return (
-              <div key={a.id} className="flex items-start gap-2.5 text-sm">
-                <button
-                  type="button"
-                  onClick={() => onToggle(a)}
-                  className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border ${completada ? 'border-hmc-white bg-hmc-white' : 'border-hmc-border'}`}
-                >
-                  {completada && <span className="text-[10px] text-hmc-black">✓</span>}
-                </button>
-                <Icon size={15} style={{ color: tipo.color }} className="mt-0.5 shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <p className={`truncate ${completada ? 'text-hmc-muted line-through' : 'text-hmc-white'}`}>{a.titulo}</p>
-                  {a.oportunidad && (
-                    <button type="button" onClick={() => onIr(a.oportunidad.id)} className="truncate text-xs text-hmc-muted hover:text-hmc-white">
-                      {a.oportunidad.titulo}
-                    </button>
-                  )}
-                  {v && <p className={`text-[11px] ${v.vencida ? 'text-red-400' : 'text-hmc-muted'}`}>{v.txt}</p>}
+        {/* ZONA 2 — Dos columnas */}
+        <div className="mb-8 flex flex-col gap-6 lg:flex-row">
+          {/* Izquierda 60% — HOY / PRÓXIMAS */}
+          <div className="lg:w-3/5">
+            <div className="glass-card p-5">
+              <h2 className={tituloSeccion}>Hoy</h2>
+              {hoyYVencidas.length === 0 ? (
+                <div className="py-1">
+                  <p className="text-sm text-[#666]">Sin actividades para hoy</p>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/crm/calendario')}
+                    className="mt-1 inline-flex items-center gap-1 text-xs text-white transition-opacity hover:opacity-80"
+                  >
+                    Ver calendario <TbArrowRight size={13} />
+                  </button>
                 </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </Card>
-  )
-}
+              ) : (
+                <div className="flex flex-col">
+                  {hoyYVencidas.map((a) => {
+                    const vencida = new Date(a.fecha_vencimiento) < inicioHoy
+                    return (
+                      <ActividadRow
+                        key={a.id}
+                        a={a}
+                        badge={
+                          <span
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                              vencida ? 'bg-red-500/15 text-red-400' : 'bg-amber-500/15 text-amber-400'
+                            }`}
+                          >
+                            {vencida ? 'VENCIDA' : 'HOY'}
+                          </span>
+                        }
+                      />
+                    )
+                  })}
+                </div>
+              )}
 
-function EnProceso({ data, loading, onIr }) {
-  const lista = data?.enProceso ?? []
-  return (
-    <Card titulo="En proceso" badge={loading ? undefined : String(lista.length)}>
-      {loading ? (
-        <div className="flex flex-col gap-2">
-          {Array.from({ length: 3 }).map((_, i) => <SkeletonBox key={i} h={40} />)}
-        </div>
-      ) : lista.length === 0 ? (
-        <p className="py-4 text-center text-sm text-hmc-muted">Sin oportunidades en proceso</p>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {lista.map((op) => {
-            const etapa = ETAPA_MAP[op.etapa]
-            const cli = op.empresa?.nombre || (op.contacto ? `${op.contacto.nombre ?? ''} ${op.contacto.apellido ?? ''}`.trim() : '')
-            const acts = op.crm_actividades ?? []
-            const ult = acts.length ? Math.max(...acts.map((x) => new Date(x.updated_at).getTime())) : new Date(op.updated_at).getTime()
-            const diasSin = Math.floor((Date.now() - ult) / 86400000)
-            return (
-              <div key={op.id} className="flex items-start gap-2">
-                <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: etapa?.color }} />
-                <div className="min-w-0 flex-1">
-                  <button type="button" onClick={() => onIr(op.id)} className="block truncate text-left text-sm font-medium text-hmc-white hover:underline">{op.titulo}</button>
-                  {cli && <p className="truncate text-xs text-hmc-muted">{cli}</p>}
-                  <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-hmc-muted">
-                    {op.valor_estimado != null && <span>{op.moneda} {Number(op.valor_estimado).toLocaleString('es-AR')}</span>}
-                    {etapa && <span className="rounded px-1.5 py-0.5" style={{ backgroundColor: `${etapa.color}22`, color: etapa.color }}>{etapa.label}</span>}
-                    {diasSin > 7 && <span className="text-[#ccaa44]">Hace {diasSin} días sin actividad</span>}
+              {proximas.length > 0 && (
+                <>
+                  <hr className="my-4 border-0 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+                  <h2 className={tituloSeccion}>Próximas</h2>
+                  <div className="flex flex-col">
+                    {proximas.map((a) => (
+                      <ActividadRow
+                        key={a.id}
+                        a={a}
+                        badge={<span className="shrink-0 text-[11px] text-[#888]">{relativoFuturo(a.fecha_vencimiento)}</span>}
+                      />
+                    ))}
                   </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </Card>
-  )
-}
-
-function VerTodas({ onClick }) {
-  return (
-    <button type="button" onClick={onClick} className="text-[11px] text-hmc-muted transition-colors hover:text-hmc-white">
-      Ver todas →
-    </button>
-  )
-}
-
-function UltimasEmpresas({ data, loading, onVerTodas, onIr }) {
-  const lista = data?.ultimasEmpresas ?? []
-  return (
-    <Card titulo="Nuevas empresas" accion={<VerTodas onClick={onVerTodas} />}>
-      {loading ? (
-        <div className="flex flex-col gap-2">{Array.from({ length: 4 }).map((_, i) => <SkeletonBox key={i} h={28} />)}</div>
-      ) : lista.length === 0 ? (
-        <p className="py-4 text-center text-sm text-hmc-muted">Sin empresas</p>
-      ) : (
-        <div className="flex flex-col gap-2.5">
-          {lista.map((e) => (
-            <button key={e.id} type="button" onClick={() => onIr(e.id)} className="flex items-center gap-2.5 text-left">
-              {e.logo_url ? (
-                <img src={e.logo_url} alt="" className="h-7 w-7 shrink-0 rounded-md object-cover" />
-              ) : (
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-hmc-gray3 text-[10px] text-hmc-white">{iniciales(e.nombre)}</span>
+                </>
               )}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-hmc-white">{e.nombre}</p>
-                <div className="mt-0.5 flex flex-wrap items-center gap-1">
-                  <SegmentoPills segmentos={e.segmentos} max={2} />
-                  <span className="text-[11px] text-hmc-muted">{tiempoRelativo(e.created_at)}</span>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-    </Card>
-  )
-}
+            </div>
 
-function CotizacionesRecientes({ data, loading, onIr }) {
-  const lista = data?.cotizaciones ?? []
-  return (
-    <Card titulo="Cotizaciones recientes">
-      {loading ? (
-        <div className="flex flex-col gap-2">{Array.from({ length: 4 }).map((_, i) => <SkeletonBox key={i} h={28} />)}</div>
-      ) : lista.length === 0 ? (
-        <p className="py-4 text-center text-sm text-hmc-muted">Sin cotizaciones</p>
-      ) : (
-        <div className="flex flex-col gap-2.5">
-          {lista.map((c) => {
-            const e = ESTADOS_COT[c.estado] ?? ESTADOS_COT.borrador
-            return (
-              <button key={c.id} type="button" onClick={() => onIr(c.id)} className="flex items-center justify-between gap-2 text-left">
-                <div className="min-w-0">
-                  <p className="truncate text-[11px] text-hmc-muted">{c.numero}</p>
-                  <p className="truncate text-sm text-hmc-white">{c.titulo}</p>
-                </div>
-                <div className="shrink-0 text-right">
-                  <span className="rounded px-1.5 py-0.5 text-[10px] font-medium" style={{ backgroundColor: `${e.color}22`, color: e.color }}>{e.label}</span>
-                  <p className="mt-0.5 text-xs text-hmc-white">{formatUSD(c.total_usd)}</p>
-                </div>
-              </button>
-            )
-          })}
-        </div>
-      )}
-    </Card>
-  )
-}
-
-function ResumenProductos({ data, loading, onVer }) {
-  const p = data?.productos
-  return (
-    <Card titulo="Catálogo" accion={<VerTodas onClick={onVer} />}>
-      {loading ? (
-        <div className="flex flex-col gap-2">{Array.from({ length: 4 }).map((_, i) => <SkeletonBox key={i} h={20} />)}</div>
-      ) : !p ? (
-        <p className="py-4 text-center text-sm text-hmc-muted">Sin datos</p>
-      ) : (
-        <div>
-          <p className="text-[28px] font-bold leading-none text-hmc-white">{p.activos}</p>
-          <p className="mb-3 text-[11px] text-hmc-muted">productos activos</p>
-          <div className="flex flex-col gap-1.5">
-            {p.porCategoria.map((c) => (
-              <div key={c.nombre} className="flex items-center justify-between text-xs">
-                <span className="inline-flex items-center gap-2 text-hmc-white">
-                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: c.color }} />
-                  {c.nombre}
-                </span>
-                <span className="text-hmc-muted">{c.count}</span>
-              </div>
-            ))}
+            {/* Gráfico actividad del período */}
+            <div className="glass-card mt-6 p-4">
+              <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-[#555]">Actividad del período</h3>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={data?.actividad ?? []} margin={{ left: -10, right: 10, top: 5 }}>
+                  <CartesianGrid stroke="#2e2e2e" />
+                  <XAxis dataKey="label" tick={AXIS_TICK} stroke="#2e2e2e" />
+                  <YAxis tick={AXIS_TICK} stroke="#2e2e2e" allowDecimals={false} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} />
+                  <Line type="monotone" dataKey="empresas" stroke="#7fb8e8" strokeWidth={2} dot={false} name="Empresas" />
+                  <Line type="monotone" dataKey="contactos" stroke="#a8d88a" strokeWidth={2} dot={false} name="Contactos" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-          {p.ultimo && <p className="mt-3 text-[11px] text-hmc-muted">Último: {p.ultimo.nombre}</p>}
+
+          {/* Derecha 40% — OPORTUNIDADES EN CURSO */}
+          <div className="lg:w-2/5">
+            <div className="glass-card p-5">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-[#555]">Oportunidades en curso</h2>
+                {oportunidades.length > 6 && (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/crm')}
+                    className="text-[11px] text-[#888] transition-colors hover:text-white"
+                  >
+                    Ver todas →
+                  </button>
+                )}
+              </div>
+              {oportunidades.length === 0 ? (
+                <p className="py-2 text-sm text-[#666]">Sin oportunidades activas</p>
+              ) : (
+                <div className="flex flex-col">
+                  {oportunidades.slice(0, 6).map((op) => {
+                    const etapa = ETAPA_MAP[op.etapa]
+                    const valor =
+                      op.valor_estimado != null
+                        ? `${op.moneda || 'USD'} ${Number(op.valor_estimado).toLocaleString('es-AR')}`
+                        : ''
+                    return (
+                      <button
+                        key={op.id}
+                        type="button"
+                        onClick={() => navigate(`/crm/${op.id}`)}
+                        className="flex w-full items-start gap-3 rounded-lg px-1.5 py-2 text-left transition-colors hover:bg-white/5"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm text-white">{op.titulo}</p>
+                          {op.empresa?.nombre && <p className="truncate text-xs text-[#666]">{op.empresa.nombre}</p>}
+                          {etapa && (
+                            <span
+                              className="mt-1 inline-block rounded px-1.5 py-0.5 text-[10px] font-medium"
+                              style={{ backgroundColor: `${etapa.color}22`, color: etapa.color }}
+                            >
+                              {etapa.label}
+                            </span>
+                          )}
+                        </div>
+                        {valor && <span className="shrink-0 pt-0.5 text-xs text-[#aaa]">{valor}</span>}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      )}
-    </Card>
+
+      </div>
+    </div>
   )
 }

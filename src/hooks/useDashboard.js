@@ -93,6 +93,8 @@ export function useDashboard(periodo) {
         cotizaciones,
         productosRows,
         ventasRows,
+        cotEnviadas,
+        oppActivas,
       ] = await Promise.all([
         supabase.from('empresas').select('*', { count: 'exact', head: true }).gte('created_at', inicio),
         supabase.from('contactos').select('*', { count: 'exact', head: true }).gte('created_at', inicio),
@@ -120,6 +122,19 @@ export function useDashboard(periodo) {
         supabase.from('cotizaciones').select('id, numero, titulo, estado, total_usd').order('created_at', { ascending: false }).limit(4),
         supabase.from('productos').select('id, nombre, activo, created_at, categoria:categoria_id(nombre, color)').order('created_at', { ascending: false }),
         supabase.from('ventas').select('total_usd, total_ars, fecha_cobro').gte('fecha_cobro', inicio),
+        // Cotizaciones enviadas sin respuesta (estado actual, solo lectura)
+        supabase
+          .from('cotizaciones')
+          .select('id, numero, titulo, created_at, cliente_nombre, empresa:empresa_id(nombre), contacto:contacto_id(nombre, apellido)')
+          .eq('estado', 'enviada')
+          .order('created_at', { ascending: false }),
+        // Oportunidades activas (excluye ganadas y perdidas), ordenadas por valor
+        supabase
+          .from('crm_oportunidades')
+          .select('id, titulo, valor_estimado, moneda, etapa, empresa:empresa_id(nombre)')
+          .neq('etapa', 'cerrado_ganado')
+          .neq('etapa', 'cerrado_perdido')
+          .order('valor_estimado', { ascending: false, nullsFirst: false }),
       ])
 
       // Pipeline por etapa
@@ -187,6 +202,8 @@ export function useDashboard(periodo) {
           segmentos: (e.empresa_segmentos ?? []).map((r) => r.segmentos).filter(Boolean),
         })),
         cotizaciones: cotizaciones.data ?? [],
+        cotizacionesEnviadas: cotEnviadas.data ?? [],
+        oportunidadesActivas: oppActivas.data ?? [],
         productos: {
           activos,
           porCategoria: [...porCatMap.values()].sort((a, b) => b.count - a.count),
