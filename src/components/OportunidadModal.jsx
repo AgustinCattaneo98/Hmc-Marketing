@@ -4,7 +4,7 @@ import { getEmpresas, getContactos, getCampanas } from '../lib/db'
 import { ETAPAS, PRIORIDADES, COLORES_CARD, MONEDAS } from '../lib/crm'
 
 const inputClass =
-  'w-full rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white placeholder:text-hmc-muted'
+  'w-full glass-input px-3 py-2 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white placeholder:text-hmc-muted'
 const labelClass = 'mb-1.5 block text-xs uppercase tracking-wide text-hmc-muted'
 
 const VACIO = {
@@ -115,7 +115,7 @@ export default function OportunidadModal({
       onMouseDown={onClose}
     >
       <div
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-xl shadow-black/40"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto glass-modal"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-hmc-border px-6 py-4">
@@ -201,7 +201,7 @@ export default function OportunidadModal({
                   placeholder="0"
                 />
                 <select
-                  className="w-24 rounded-md border border-hmc-border bg-hmc-gray2 px-2 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white"
+                  className="w-24 glass-input px-2 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white"
                   value={form.moneda}
                   onChange={(e) => update('moneda', e.target.value)}
                 >

@@ -33,7 +33,7 @@ export default function AsignarOportunidadModal({ cotizacionId, onClose, onAsign
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4" onMouseDown={onClose}>
-      <div className="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-xl shadow-black/40" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden glass-modal" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-hmc-border px-6 py-4">
           <h2 className="text-lg font-semibold text-hmc-white">Asignar a oportunidad CRM</h2>
           <button type="button" onClick={onClose} className="text-hmc-muted hover:text-hmc-white"><TbX size={20} /></button>
@@ -41,7 +41,7 @@ export default function AsignarOportunidadModal({ cotizacionId, onClose, onAsign
         <div className="border-b border-hmc-border px-6 py-3">
           <div className="relative">
             <TbSearch size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-hmc-muted" />
-            <input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar oportunidad…" className="w-full rounded-md border border-hmc-border bg-hmc-gray2 py-2 pl-9 pr-3 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted" />
+            <input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar oportunidad…" className="w-full glass-input py-2 pl-9 pr-3 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted" />
           </div>
         </div>
         <div className="max-h-60 flex-1 overflow-y-auto px-3 py-2">

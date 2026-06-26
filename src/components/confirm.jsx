@@ -59,7 +59,7 @@ export function ConfirmProvider({ children }) {
           onMouseDown={() => cerrar(false)}
         >
           <div
-            className="w-full max-w-sm rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-6 shadow-xl"
+            className="w-full max-w-sm glass-card p-6 shadow-xl"
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-center gap-3">

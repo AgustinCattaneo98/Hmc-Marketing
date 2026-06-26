@@ -57,7 +57,7 @@ export default function BuscadorModal({ tipo, excluir = [], onAgregar, onClose }
       onMouseDown={onClose}
     >
       <div
-        className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-xl shadow-black/40"
+        className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden glass-modal"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-hmc-border px-6 py-4">
@@ -86,7 +86,7 @@ export default function BuscadorModal({ tipo, excluir = [], onAgregar, onClose }
               placeholder="Buscar…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-md border border-hmc-border bg-hmc-gray2 py-2 pl-10 pr-3 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted"
+              className="w-full glass-input py-2 pl-10 pr-3 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted"
             />
           </div>
         </div>

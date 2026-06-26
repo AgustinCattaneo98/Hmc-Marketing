@@ -161,7 +161,7 @@ export default function EmailClienteModal({ cliente, campana, onClose, onSaved }
       onMouseDown={onClose}
     >
       <div
-        className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-xl shadow-black/40"
+        className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden glass-modal"
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -216,7 +216,7 @@ export default function EmailClienteModal({ cliente, campana, onClose, onSaved }
                 placeholder="Asunto de este email…"
                 value={asunto}
                 onChange={(e) => setAsunto(e.target.value)}
-                className="flex-1 rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted"
+                className="flex-1 glass-input px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted"
               />
               <select
                 defaultValue=""
@@ -224,7 +224,7 @@ export default function EmailClienteModal({ cliente, campana, onClose, onSaved }
                   aplicarPlantilla(e.target.value)
                   e.target.value = ''
                 }}
-                className="rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white sm:w-48"
+                className="glass-input px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white sm:w-48"
               >
                 <option value="">Usar plantilla…</option>
                 {plantillas.map((p) => (
@@ -235,7 +235,7 @@ export default function EmailClienteModal({ cliente, campana, onClose, onSaved }
               </select>
             </div>
 
-            <div className="overflow-hidden rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30">
+            <div className="overflow-hidden glass-card">
               <EmailHeader />
               <div className="flex flex-col gap-2 p-4">
                 {bloques.length === 0 ? (

@@ -127,7 +127,7 @@ export default function Cotizaciones() {
       </div>
 
       {/* Card dólar */}
-      <div className="mb-4 flex items-center justify-between gap-4 rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-3">
+      <div className="mb-4 flex items-center justify-between gap-4 glass-card p-3">
         {dolarLoading && !dolar ? (
           <div className="h-6 w-40 animate-pulse rounded bg-hmc-gray3" />
         ) : dolar ? (
@@ -147,13 +147,13 @@ export default function Cotizaciones() {
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <div className="relative min-w-[200px] flex-1">
           <TbSearch size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-hmc-muted" />
-          <input type="text" placeholder="Buscar por número, título o cliente…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-md border border-hmc-border bg-hmc-gray2 py-2 pl-9 pr-3 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted" />
+          <input type="text" placeholder="Buscar por número, título o cliente…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-full glass-input py-2 pl-9 pr-3 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted" />
         </div>
-        <select value={estadoF} onChange={(e) => setEstadoF(e.target.value)} className="rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white">
+        <select value={estadoF} onChange={(e) => setEstadoF(e.target.value)} className="glass-input px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white">
           <option value="">Todos los estados</option>
           {ESTADOS_COT_LIST.map((e) => <option key={e.value} value={e.value}>{e.label}</option>)}
         </select>
-        <select value={empresaF} onChange={(e) => setEmpresaF(e.target.value)} className="rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white">
+        <select value={empresaF} onChange={(e) => setEmpresaF(e.target.value)} className="glass-input px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white">
           <option value="">Todas las empresas</option>
           {empresas.map((e) => <option key={e.id} value={e.id}>{e.nombre}</option>)}
         </select>
@@ -165,7 +165,7 @@ export default function Cotizaciones() {
       {loading ? (
         <p className="text-sm text-hmc-muted">Cargando…</p>
       ) : filtradas.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 px-6 py-16 text-center">
+        <div className="flex flex-col items-center justify-center glass-card px-6 py-16 text-center">
           <TbFileInvoice size={40} className="mb-3 text-hmc-muted" />
           <p className="text-sm text-hmc-muted">No hay cotizaciones</p>
           <button type="button" onClick={() => setModal(true)} className="mt-4 inline-flex items-center gap-2 rounded-md bg-hmc-white px-4 py-2 text-sm font-semibold text-hmc-black hover:opacity-90">
@@ -259,7 +259,7 @@ export default function Cotizaciones() {
   )
 }
 
-const inputClass = 'w-full rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted'
+const inputClass = 'w-full glass-input px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted'
 const labelClass = 'mb-1.5 block text-xs uppercase tracking-wide text-hmc-muted'
 
 function NuevaCotizacionModal({ onClose, onCreated, dolar }) {
@@ -308,7 +308,7 @@ function NuevaCotizacionModal({ onClose, onCreated, dolar }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4" onMouseDown={onClose}>
-      <div className="w-full max-w-md rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-xl shadow-black/40" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-md glass-modal" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-hmc-border px-6 py-4">
           <h2 className="text-lg font-semibold text-hmc-white">Nueva cotización</h2>
           <button type="button" onClick={onClose} className="text-hmc-muted hover:text-hmc-white"><TbX size={20} /></button>

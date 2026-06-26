@@ -47,7 +47,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="flex h-full w-60 flex-col border-r border-hmc-border bg-hmc-black">
+    <aside className="flex h-full w-60 flex-col glass-sidebar">
       <div className="px-6 py-8">
         {logo ? (
           <img src={logo} alt="Logo" className="h-8 object-contain" />

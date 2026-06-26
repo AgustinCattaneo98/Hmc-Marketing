@@ -79,7 +79,7 @@ export default function WhatsappModal({ cliente, onClose, onSaved }) {
       onMouseDown={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-xl shadow-black/40"
+        className="w-full max-w-lg glass-modal"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-hmc-border px-6 py-4">
@@ -110,7 +110,7 @@ export default function WhatsappModal({ cliente, onClose, onSaved }) {
               if (e.target.value) setTexto(e.target.value)
               e.target.value = ''
             }}
-            className="mb-4 w-full rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white"
+            className="mb-4 w-full glass-input px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white"
           >
             <option value="">Usar texto predefinido…</option>
             {textos.map((t, i) => (
@@ -127,7 +127,7 @@ export default function WhatsappModal({ cliente, onClose, onSaved }) {
             onChange={(e) => setTexto(e.target.value)}
             maxLength={1600}
             placeholder="Hola [Nombre], te escribo de parte de HMC Bicicletas…"
-            className="w-full resize-none rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted"
+            className="w-full resize-none glass-input px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted"
           />
           <div className="mt-1 flex items-center justify-between text-xs text-hmc-muted">
             <button

@@ -35,20 +35,20 @@ function variantesCount(p) {
 function DolarCard({ cotizacion, loading, onRefresh, compacta }) {
   if (loading && !cotizacion) {
     return (
-      <div className={`rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 ${compacta ? 'p-3' : 'p-4'}`}>
+      <div className={`glass-card ${compacta ? 'p-3' : 'p-4'}`}>
         <div className="h-10 animate-pulse rounded bg-hmc-gray3" />
       </div>
     )
   }
   if (!cotizacion) {
     return (
-      <div className={`rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 ${compacta ? 'p-3' : 'p-4'}`}>
+      <div className={`glass-card ${compacta ? 'p-3' : 'p-4'}`}>
         <p className="text-sm text-hmc-muted">No se pudo obtener la cotización.</p>
       </div>
     )
   }
   return (
-    <div className={`flex items-center justify-between gap-4 rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 ${compacta ? 'p-3' : 'p-4'}`}>
+    <div className={`flex items-center justify-between gap-4 glass-card ${compacta ? 'p-3' : 'p-4'}`}>
       <div className="flex items-center gap-6">
         <div>
           <p className="text-[10px] uppercase tracking-wide text-hmc-muted">Dólar {cotizacion.nombre}</p>
@@ -270,7 +270,7 @@ export default function Productos() {
           <div className="mb-6 flex flex-wrap items-center gap-3">
             <div className="relative min-w-[200px] flex-1">
               <TbSearch size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-hmc-muted" />
-              <input type="text" placeholder="Buscar producto…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-md border border-hmc-border bg-hmc-gray2 py-2 pl-9 pr-3 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted" />
+              <input type="text" placeholder="Buscar producto…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-full glass-input py-2 pl-9 pr-3 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted" />
             </div>
             <label className="flex shrink-0 cursor-pointer items-center gap-2 text-sm text-hmc-white">
               <button type="button" onClick={() => setSoloActivos((v) => !v)} className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${soloActivos ? 'bg-green-500' : 'bg-hmc-gray3'}`}>
@@ -283,7 +283,7 @@ export default function Productos() {
           {loading ? (
             <p className="text-sm text-hmc-muted">Cargando…</p>
           ) : filtrados.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 px-6 py-16 text-center">
+            <div className="flex flex-col items-center justify-center glass-card px-6 py-16 text-center">
               <TbBike size={40} className="mb-3 text-hmc-muted" />
               <p className="text-sm text-hmc-muted">No hay productos en esta categoría</p>
               <button type="button" onClick={() => setProdModal({ producto: null })} className="mt-4 inline-flex items-center gap-2 rounded-md bg-hmc-white px-4 py-2 text-sm font-semibold text-hmc-black hover:opacity-90">
@@ -352,7 +352,7 @@ function ProductoCard({ p, cotizacion, onOpen, onEdit, onDelete }) {
   return (
     <div
       onClick={onOpen}
-      className="group cursor-pointer overflow-hidden rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 transition-all hover:border-[#555] active:scale-[0.99]"
+      className="group cursor-pointer overflow-hidden glass-card transition-all hover:border-[#555] active:scale-[0.99]"
     >
       <div className="relative flex aspect-video items-center justify-center" style={{ backgroundColor: `${color}22` }}>
         {p.foto_url ? <img src={p.foto_url} alt="" className="h-full w-full object-cover" /> : <TbBike size={36} style={{ color }} />}
@@ -382,7 +382,7 @@ function ProductoCard({ p, cotizacion, onOpen, onEdit, onDelete }) {
 
 function ProductoTabla({ productos, cotizacion, onOpen, onEdit, onDelete }) {
   return (
-    <div className="overflow-hidden rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30">
+    <div className="overflow-hidden glass-card">
       <div className="grid grid-cols-[48px_2fr_1fr_1fr_1fr_auto_auto] items-center gap-3 border-b border-hmc-border px-4 py-2.5 text-xs uppercase tracking-wide text-hmc-muted">
         <span />
         <span>Nombre</span>

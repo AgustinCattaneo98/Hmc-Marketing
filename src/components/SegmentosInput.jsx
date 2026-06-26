@@ -95,7 +95,7 @@ export default function SegmentosInput({ value = [], onChange, placeholder = 'Bu
           setOpen(true)
           inputRef.current?.focus()
         }}
-        className="flex min-h-[42px] w-full cursor-text flex-wrap items-center gap-1.5 rounded-md border border-hmc-border bg-hmc-gray2 px-2 py-1.5 transition-colors focus-within:border-hmc-white"
+        className="flex min-h-[42px] w-full cursor-text flex-wrap items-center gap-1.5 glass-input px-2 py-1.5 transition-colors focus-within:border-hmc-white"
       >
         {value.map((s) => (
           <span
@@ -137,7 +137,7 @@ export default function SegmentosInput({ value = [], onChange, placeholder = 'Bu
 
       {/* Dropdown de sugerencias / crear */}
       {open && (sugerencias.length > 0 || puedeCrear) && (
-        <div className="absolute z-10 mt-1 max-h-52 w-full overflow-y-auto rounded-md border border-hmc-border bg-hmc-gray2 py-1 shadow-xl">
+        <div className="absolute z-10 mt-1 max-h-52 w-full overflow-y-auto glass-input py-1 shadow-xl">
           {sugerencias.map((s) => (
             <button
               key={s.id}

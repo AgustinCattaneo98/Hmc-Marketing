@@ -15,7 +15,7 @@ import { MONEDAS } from '../lib/productos'
 import CategoriaModal from './CategoriaModal'
 
 const inputClass =
-  'w-full rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white placeholder:text-hmc-muted'
+  'w-full glass-input px-3 py-2 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white placeholder:text-hmc-muted'
 const labelClass = 'mb-1.5 block text-xs uppercase tracking-wide text-hmc-muted'
 
 const uid = () =>
@@ -185,7 +185,7 @@ export default function ProductoModal({ producto, cotizacion, onClose, onSaved }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4" onMouseDown={onClose}>
-      <div className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-xl shadow-black/40" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden glass-modal" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-hmc-border px-6 py-4">
           <h2 className="text-lg font-semibold text-hmc-white">{producto ? 'Editar producto' : 'Nuevo producto'}</h2>
           <button type="button" onClick={onClose} className="text-hmc-muted hover:text-hmc-white" aria-label="Cerrar"><TbX size={20} /></button>
@@ -229,7 +229,7 @@ export default function ProductoModal({ producto, cotizacion, onClose, onSaved }
                 <label className={labelClass}>Precio</label>
                 <div className="flex gap-2">
                   <input type="number" step="0.01" className={inputClass} value={form.precio_usd} onChange={(e) => update('precio_usd', e.target.value)} placeholder="0.00" />
-                  <select className="w-24 rounded-md border border-hmc-border bg-hmc-gray2 px-2 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white" value={form.moneda} onChange={(e) => update('moneda', e.target.value)}>
+                  <select className="w-24 glass-input px-2 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white" value={form.moneda} onChange={(e) => update('moneda', e.target.value)}>
                     {MONEDAS.map((m) => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
@@ -287,7 +287,7 @@ export default function ProductoModal({ producto, cotizacion, onClose, onSaved }
             {/* PDF */}
             <h3 className="mb-3 mt-6 text-xs uppercase tracking-wide text-hmc-muted">PDF</h3>
             {pdfUrl ? (
-              <div className="flex items-center gap-3 rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2">
+              <div className="flex items-center gap-3 glass-input px-3 py-2">
                 <TbFileText size={18} className="text-hmc-muted" />
                 <a href={pdfUrl} target="_blank" rel="noreferrer" className="flex-1 truncate text-sm text-[#7fb8e8] hover:underline">Ver</a>
                 <button type="button" onClick={() => setPdfUrl('')} className="text-hmc-muted hover:text-red-400"><TbTrash size={16} /></button>
@@ -301,10 +301,10 @@ export default function ProductoModal({ producto, cotizacion, onClose, onSaved }
             <h3 className="mb-3 mt-6 text-xs uppercase tracking-wide text-hmc-muted">Variantes / upgrades</h3>
             <div className="flex flex-col gap-2">
               {variantes.map((v) => (
-                <div key={v._uid} className="rounded-md border border-hmc-border bg-hmc-gray2 p-2.5">
+                <div key={v._uid} className="glass-input p-2.5">
                   <div className="flex items-center gap-2">
                     <input className={inputClass} placeholder="Nombre" value={v.nombre} onChange={(e) => updateVar(v._uid, 'nombre', e.target.value)} />
-                    <input type="number" step="0.01" className="w-28 rounded-md border border-hmc-border bg-hmc-gray2 px-2 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white" placeholder={form.moneda} value={v.precio_usd} onChange={(e) => updateVar(v._uid, 'precio_usd', e.target.value)} />
+                    <input type="number" step="0.01" className="w-28 glass-input px-2 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white" placeholder={form.moneda} value={v.precio_usd} onChange={(e) => updateVar(v._uid, 'precio_usd', e.target.value)} />
                     <button type="button" onClick={() => removeVar(v._uid)} className="rounded p-1.5 text-hmc-muted hover:text-red-400"><TbTrash size={16} /></button>
                   </div>
                   {v.precio_usd !== '' && (

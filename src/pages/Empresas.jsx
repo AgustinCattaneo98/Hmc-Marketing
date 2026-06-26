@@ -31,7 +31,7 @@ import { SegmentoPills } from '../components/SegmentoPill'
 import { confirmDialog } from '../components/confirm'
 
 const filtroSelectClass =
-  'rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white'
+  'glass-input px-3 py-2 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white'
 
 export default function Empresas() {
   const navigate = useNavigate()
@@ -345,7 +345,7 @@ export default function Empresas() {
               placeholder="Buscar por nombre…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-md border border-hmc-border bg-hmc-gray2 py-2 pl-10 pr-3 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white placeholder:text-hmc-muted"
+              className="w-full glass-input py-2 pl-10 pr-3 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white placeholder:text-hmc-muted"
             />
           </div>
           <select
@@ -422,7 +422,7 @@ export default function Empresas() {
 
       {/* Barra de acciones masivas */}
       {selected.size > 0 && (
-        <div className="mb-4 flex items-center justify-between gap-3 rounded-md border border-hmc-border bg-hmc-gray2 px-4 py-2.5">
+        <div className="mb-4 flex items-center justify-between gap-3 glass-input px-4 py-2.5">
           <span className="text-sm text-hmc-white">
             {selected.size} seleccionada{selected.size === 1 ? '' : 's'}
           </span>
@@ -465,7 +465,7 @@ export default function Empresas() {
       )}
 
       {/* Contenido */}
-      <div className="overflow-hidden rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30">
+      <div className="overflow-hidden glass-card">
         {/* Encabezado de tabla */}
         <div className="grid grid-cols-[36px_48px_2fr_140px_160px_120px_80px_80px] items-center gap-4 border-b border-hmc-border px-5 py-2.5 text-xs uppercase tracking-wide text-hmc-muted">
           <span className="flex items-center">

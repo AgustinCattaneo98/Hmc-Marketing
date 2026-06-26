@@ -222,8 +222,7 @@ export default function Dashboard() {
 // ---------- Componentes ----------
 // Estilo de card tipo iOS: esquinas muy redondeadas, degradado sutil,
 // hairline claro (ring) y sombra suave en vez del borde duro.
-const cardClass =
-  'rounded-2xl bg-white/[0.07] backdrop-blur-md p-5 ring-1 ring-white/15 shadow-lg shadow-black/30'
+const cardClass = 'glass-card p-5'
 
 function Card({ titulo, badge, children, accion }) {
   return (

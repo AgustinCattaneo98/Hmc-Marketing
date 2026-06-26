@@ -235,7 +235,7 @@ export default function CRM() {
           placeholder="Buscar por título…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-md border border-hmc-border bg-hmc-gray2 py-2 pl-10 pr-3 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted"
+          className="w-full glass-input py-2 pl-10 pr-3 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted"
         />
       </div>
 
@@ -314,7 +314,7 @@ export default function CRM() {
 
 function StatCard({ valor, label, small }) {
   return (
-    <div className="rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 px-4 py-3">
+    <div className="glass-card px-4 py-3">
       <div className={`font-semibold text-hmc-white ${small ? 'text-base' : 'text-2xl'}`}>
         {valor}
       </div>
@@ -328,7 +328,7 @@ function KanbanColumna({ etapa, cards, onOpen, onEdit, onDelete, onCotizar, onAg
   const totalEtapa = montoColumna(cards)
 
   return (
-    <div className="flex w-[320px] min-w-[320px] shrink-0 flex-col rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30">
+    <div className="flex w-[320px] min-w-[320px] shrink-0 flex-col glass-card">
       <div className="h-1 rounded-t-lg" style={{ backgroundColor: etapa.color }} />
       <div className="px-3 py-2.5">
         <div className="flex items-center justify-between">

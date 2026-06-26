@@ -4,7 +4,7 @@ import { getOportunidades, createActividadCRM, updateActividadCRM } from '../lib
 import { TIPOS_ACTIVIDAD, ESTADOS_ACTIVIDAD } from '../lib/campanas'
 
 const inputClass =
-  'w-full rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted'
+  'w-full glass-input px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted'
 const labelClass = 'mb-1.5 block text-xs uppercase tracking-wide text-hmc-muted'
 const ALTA = '[ALTA] '
 
@@ -81,7 +81,7 @@ export default function ActividadCRMModal({ actividad, oportunidadId, onClose, o
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4" onMouseDown={onClose}>
-      <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-xl shadow-black/40" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto glass-modal" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-hmc-border px-6 py-4">
           <h2 className="text-lg font-semibold text-hmc-white">{actividad ? 'Editar actividad' : 'Nueva actividad'}</h2>
           <button type="button" onClick={onClose} className="text-hmc-muted hover:text-hmc-white"><TbX size={20} /></button>
@@ -132,7 +132,7 @@ export default function ActividadCRMModal({ actividad, oportunidadId, onClose, o
               <label className={labelClass}>Vencimiento</label>
               <div className="flex gap-2">
                 <input type="date" className={inputClass} value={form.fecha} onChange={(e) => update('fecha', e.target.value)} />
-                <input type="time" className="w-32 rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white" value={form.hora} onChange={(e) => update('hora', e.target.value)} />
+                <input type="time" className="w-32 glass-input px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white" value={form.hora} onChange={(e) => update('hora', e.target.value)} />
               </div>
               <div className="mt-2 flex gap-2">
                 {[{ l: 'Hoy', d: 0 }, { l: 'Mañana', d: 1 }, { l: 'En 1 semana', d: 7 }].map((s) => (

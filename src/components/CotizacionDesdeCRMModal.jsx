@@ -69,7 +69,7 @@ export default function CotizacionDesdeCRMModal({ oportunidad, onClose, onCreada
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4" onMouseDown={onClose}>
-      <div className="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-xl shadow-black/40" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden glass-modal" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-hmc-border px-6 py-4">
           <h2 className="text-base font-semibold text-hmc-white">Cotización para {oportunidad.titulo}</h2>
           <button type="button" onClick={onClose} className="text-hmc-muted hover:text-hmc-white"><TbX size={20} /></button>
@@ -84,7 +84,7 @@ export default function CotizacionDesdeCRMModal({ oportunidad, onClose, onCreada
         {tab === 'nueva' ? (
           <div className="px-6 py-5">
             <label className="mb-1.5 block text-xs uppercase tracking-wide text-hmc-muted">Título</label>
-            <input value={titulo} onChange={(e) => setTitulo(e.target.value)} className="w-full rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white" autoFocus />
+            <input value={titulo} onChange={(e) => setTitulo(e.target.value)} className="w-full glass-input px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white" autoFocus />
             {clienteNombre && (
               <p className="mt-3 text-xs text-hmc-muted">Cliente: <span className="text-hmc-white">{clienteNombre}</span> <span className="text-hmc-muted">(de la oportunidad)</span></p>
             )}
@@ -99,7 +99,7 @@ export default function CotizacionDesdeCRMModal({ oportunidad, onClose, onCreada
             <div className="border-b border-hmc-border px-6 py-3">
               <div className="relative">
                 <TbSearch size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-hmc-muted" />
-                <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar…" className="w-full rounded-md border border-hmc-border bg-hmc-gray2 py-2 pl-9 pr-3 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted" />
+                <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar…" className="w-full glass-input py-2 pl-9 pr-3 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted" />
               </div>
             </div>
             <div className="max-h-60 flex-1 overflow-y-auto px-3 py-2">

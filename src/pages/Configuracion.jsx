@@ -49,7 +49,7 @@ const TABS = [
 ]
 
 const inputClass =
-  'w-full rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white placeholder:text-hmc-muted'
+  'w-full glass-input px-3 py-2 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white placeholder:text-hmc-muted'
 const labelClass = 'mb-1.5 block text-xs uppercase tracking-wide text-hmc-muted'
 
 function SectionTitle({ children }) {
@@ -221,7 +221,7 @@ function TabEmpresa({ showToast }) {
 
       {/* Logo */}
       <div className="mb-6 flex items-center gap-4">
-        <div className="flex h-16 w-28 items-center justify-center overflow-hidden rounded-md border border-hmc-border bg-hmc-gray2">
+        <div className="flex h-16 w-28 items-center justify-center overflow-hidden glass-input">
           {logo ? (
             <img src={logo} alt="Logo" className="max-h-full max-w-full object-contain" />
           ) : (
@@ -265,7 +265,7 @@ function TabEmpresa({ showToast }) {
       <div className="mb-6">
         <p className="mb-2 text-xs uppercase tracking-wide text-hmc-muted">Portada del dashboard</p>
         <div className="flex items-start gap-4">
-          <div className="flex h-20 w-36 items-center justify-center overflow-hidden rounded-md border border-hmc-border bg-hmc-gray2">
+          <div className="flex h-20 w-36 items-center justify-center overflow-hidden glass-input">
             {portada ? (
               <img src={portada} alt="Portada" className="h-full w-full object-cover" />
             ) : (
@@ -794,7 +794,7 @@ function EstadoConexion({ conectado }) {
 
 function IntegracionCard({ titulo, conectado, children }) {
   return (
-    <div className="mb-3 rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-4">
+    <div className="mb-3 glass-card p-4">
       <div className="mb-4 flex items-center justify-between">
         <h4 className="font-medium text-hmc-white">{titulo}</h4>
         {conectado !== undefined && <EstadoConexion conectado={conectado} />}
@@ -1082,7 +1082,7 @@ function TabIntegraciones({ showToast }) {
       </IntegracionCard>
 
       {/* OTROS / FUTUROS */}
-      <div className="mb-3 rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-4">
+      <div className="mb-3 glass-card p-4">
         <button
           type="button"
           onClick={() => setOtrosAbierto((v) => !v)}

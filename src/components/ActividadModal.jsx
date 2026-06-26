@@ -3,7 +3,7 @@ import { TbX } from 'react-icons/tb'
 import { TIPOS_ACTIVIDAD, ESTADOS_ACTIVIDAD, nombreCliente } from '../lib/campanas'
 
 const inputClass =
-  'w-full rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white placeholder:text-hmc-muted'
+  'w-full glass-input px-3 py-2 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white placeholder:text-hmc-muted'
 const labelClass = 'mb-1.5 block text-xs uppercase tracking-wide text-hmc-muted'
 
 // Convierte ISO <-> valor de <input type="datetime-local"> (hora local).
@@ -76,7 +76,7 @@ export default function ActividadModal({
       onMouseDown={onClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-xl shadow-black/40"
+        className="w-full max-w-md glass-modal"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-hmc-border px-6 py-4">

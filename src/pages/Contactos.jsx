@@ -28,7 +28,7 @@ import ContactoModal from '../components/ContactoModal'
 import ImportModal from '../components/ImportModal'
 
 const filtroSelectClass =
-  'rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white'
+  'glass-input px-3 py-2 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white'
 
 export default function Contactos() {
   const [contactos, setContactos] = useState([])
@@ -273,7 +273,7 @@ export default function Contactos() {
               placeholder="Buscar por nombre o apellido…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-md border border-hmc-border bg-hmc-gray2 py-2 pl-10 pr-3 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white placeholder:text-hmc-muted"
+              className="w-full glass-input py-2 pl-10 pr-3 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white placeholder:text-hmc-muted"
             />
           </div>
           <select
@@ -545,7 +545,7 @@ function SkeletonRows() {
       {Array.from({ length: 5 }).map((_, i) => (
         <div
           key={i}
-          className="flex items-center gap-4 rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-4"
+          className="flex items-center gap-4 glass-card p-4"
         >
           <div className="h-12 w-12 shrink-0 animate-pulse rounded-full bg-hmc-gray3" />
           <div className="flex-1 space-y-2">
@@ -561,7 +561,7 @@ function SkeletonRows() {
 
 function EmptyState({ hasContactos, onCreate }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 px-6 py-16 text-center">
+    <div className="flex flex-col items-center justify-center glass-card px-6 py-16 text-center">
       <TbUsers size={40} className="mb-3 text-hmc-muted" />
       {hasContactos ? (
         <p className="text-sm text-hmc-muted">

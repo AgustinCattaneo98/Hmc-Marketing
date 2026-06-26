@@ -218,7 +218,7 @@ export default function CRMActividades() {
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="relative min-w-[180px] flex-1">
           <TbSearch size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-hmc-muted" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por título…" className="w-full rounded-md border border-hmc-border bg-hmc-gray2 py-2 pl-9 pr-3 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por título…" className="w-full glass-input py-2 pl-9 pr-3 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted" />
         </div>
         <Sel value={fEstado} onChange={setFEstado} placeholder="Estado" opts={ESTADOS_ACTIVIDAD.map((e) => ({ v: e.value, l: e.label }))} />
         <Sel value={fTipo} onChange={setFTipo} placeholder="Tipo" opts={TIPOS_ACTIVIDAD.map((t) => ({ v: t.value, l: t.label }))} />
@@ -280,7 +280,7 @@ export default function CRMActividades() {
 
 function Sel({ value, onChange, placeholder, opts }) {
   return (
-    <select value={value} onChange={(e) => onChange(e.target.value)} className="rounded-md border border-hmc-border bg-hmc-gray2 px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white">
+    <select value={value} onChange={(e) => onChange(e.target.value)} className="glass-input px-3 py-2 text-sm text-hmc-white outline-none focus:border-hmc-white">
       <option value="">{placeholder}: todos</option>
       {opts.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
     </select>
@@ -289,7 +289,7 @@ function Sel({ value, onChange, placeholder, opts }) {
 
 function StatCard({ icon: Icon, color, valor, label, alerta, small }) {
   return (
-    <div className="relative rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 p-4" style={alerta ? { backgroundColor: '#e24b4a0d' } : {}}>
+    <div className="relative glass-card p-4" style={alerta ? { backgroundColor: '#e24b4a0d' } : {}}>
       <Icon size={26} style={{ color }} className="absolute right-3 top-3 opacity-80" />
       <p className={`font-bold leading-none text-hmc-white ${small ? 'text-lg' : 'text-2xl'}`}>{valor}</p>
       <p className="mt-1.5 text-[11px] uppercase tracking-wide text-hmc-muted">{label}</p>
@@ -314,7 +314,7 @@ function ActRow({ act, onToggle, onEdit, onEliminar, onIr, compacta }) {
   return (
     <div
       onClick={() => onEdit(act)}
-      className={`group flex cursor-pointer items-start gap-3 rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 px-3.5 py-3 transition-colors hover:border-[#555] hover:bg-hmc-gray3/40 ${completada ? 'opacity-50' : ''}`}
+      className={`group flex cursor-pointer items-start gap-3 glass-card px-3.5 py-3 transition-colors hover:border-[#555] hover:bg-hmc-gray3/40 ${completada ? 'opacity-50' : ''}`}
       style={vencidaGrp ? { borderLeft: '2px solid #e24b4a' } : grupoDe(act) === 'hoy' ? { borderLeft: '2px solid #e8b87f' } : {}}
     >
       <button
@@ -385,7 +385,7 @@ function TabLista({ actividades, mostrarCompletadas, setMostrarCompletadas, onTo
       </div>
 
       {visibles.length === 0 ? (
-        <div className="rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30 px-6 py-12 text-center text-sm text-hmc-muted">No hay actividades.</div>
+        <div className="glass-card px-6 py-12 text-center text-sm text-hmc-muted">No hay actividades.</div>
       ) : (
         <div className="flex flex-col gap-4">
           {GRUPOS.filter((g) => porGrupo[g.key]?.length).map((g) => (
@@ -451,7 +451,7 @@ function OportunidadGrupo({ op, acts, onToggle, onEdit, onNueva, onIr }) {
   const pct = acts.length ? Math.round((completadas / acts.length) * 100) : 0
 
   return (
-    <div className="rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30">
+    <div className="glass-card">
       <div className="flex items-center gap-3 p-3">
         <button type="button" onClick={() => setAbierto((v) => !v)} className="min-w-0 flex-1 text-left">
           <div className="flex items-center gap-2">
@@ -503,7 +503,7 @@ function TabKanban({ actividades, onMover, onEdit, onIr }) {
 function KanbanCol({ col, cards, onEdit, onIr }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.key })
   return (
-    <div className="flex w-[230px] min-w-[230px] shrink-0 flex-col rounded-2xl bg-white/[0.07] backdrop-blur-md ring-1 ring-white/15 shadow-lg shadow-black/30">
+    <div className="flex w-[230px] min-w-[230px] shrink-0 flex-col glass-card">
       <div className="flex items-center justify-between px-3 py-2.5">
         <span className="text-xs font-medium uppercase tracking-wide text-hmc-white">{col.label}</span>
         <span className="rounded bg-hmc-gray3 px-1.5 py-0.5 text-xs text-hmc-muted">{cards.length}</span>

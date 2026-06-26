@@ -64,7 +64,7 @@ export default function Login() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="rounded-md border border-hmc-border bg-hmc-gray2 px-4 py-2.5 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white"
+              className="glass-input px-4 py-2.5 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white"
             />
           </div>
 
@@ -82,7 +82,7 @@ export default function Login() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="rounded-md border border-hmc-border bg-hmc-gray2 px-4 py-2.5 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white"
+              className="glass-input px-4 py-2.5 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white"
             />
           </div>
 
