@@ -172,7 +172,7 @@ export async function generarCotizacionPDF(cotizacion, dolarVenta) {
   const items = cotizacion.cotizacion_items || []
 
   const head = mostrarARS
-    ? [['#', 'Descripción', 'Cant.', 'P. Unit. USD', 'Subtotal USD', 'P. Unit. ARS', 'Subtotal ARS']]
+    ? [['#', 'Descripción', 'Cant.', 'P. Unit. USD', 'Subtotal USD', 'P. Unit. Pesos', 'Subtotal Pesos']]
     : [['#', 'Descripción', 'Cant.', 'P. Unit. USD', 'Subtotal USD']]
 
   const body = items.map((item, i) => {
@@ -292,21 +292,26 @@ export async function generarCotizacionPDF(cotizacion, dolarVenta) {
   doc.setLineWidth(0.3)
   doc.line(labX, y + oSepCursor, valX, y + oSepCursor)
 
-  // TOTAL USD
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(11)
-  doc.setTextColor(...NEGRO)
-  doc.text('TOTAL USD:', labX, y + oTotal)
-  doc.text(`USD ${fUSD(totalUSD)}`, valX, y + oTotal, { align: 'right' })
-
-  // ≈ ARS (con splitTextToSize para que no se corte)
+  // TOTAL principal en PESOS argentinos; USD secundario debajo.
   if (totalARS) {
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.setTextColor(...NEGRO)
+    doc.text('TOTAL PESOS:', labX, y + oTotal)
+    const pesosLines = doc.splitTextToSize(fARS(totalARS), boxW - pad * 2 - 26)
+    doc.text(pesosLines, valX, y + oTotal, { align: 'right' })
+
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(8)
     doc.setTextColor(...GRIS)
-    doc.text('≈ ARS:', labX, y + oArs)
-    const arsLines = doc.splitTextToSize(fARS(totalARS), boxW - pad * 2 - 16)
-    doc.text(arsLines, valX, y + oArs, { align: 'right' })
+    doc.text('Total USD:', labX, y + oArs)
+    doc.text(`USD ${fUSD(totalUSD)}`, valX, y + oArs, { align: 'right' })
+  } else {
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.setTextColor(...NEGRO)
+    doc.text('TOTAL USD:', labX, y + oTotal)
+    doc.text(`USD ${fUSD(totalUSD)}`, valX, y + oTotal, { align: 'right' })
   }
 
   // Tipo de cambio, debajo del recuadro, alineado a la derecha

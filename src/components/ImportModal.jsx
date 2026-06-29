@@ -33,6 +33,19 @@ const CONFIG = {
       { campo: 'notas', headers: ['notas', 'observaciones'] },
     ],
   },
+  cotizaciones: {
+    titulo: 'Importar cotizaciones',
+    plantilla: '/plantillas/plantilla_cotizaciones.csv',
+    campos: [
+      // 'nombre' = título de la cotización (la validación del modal usa 'nombre').
+      { campo: 'nombre', headers: ['titulo', 'título', 'nombre'], requerido: true },
+      { campo: 'estado', headers: ['estado'] },
+      { campo: 'cliente_nombre', headers: ['cliente', 'cliente_nombre'] },
+      { campo: 'total_usd', headers: ['total usd', 'total_usd', 'usd'], esNumero: true },
+      { campo: 'total_ars', headers: ['total ars', 'total_ars', 'ars'], esNumero: true },
+      { campo: 'validez_dias', headers: ['validez', 'validez_dias', 'dias'], esNumero: true },
+    ],
+  },
   productos: {
     titulo: 'Importar productos',
     plantilla: '/plantillas/plantilla_productos.csv',

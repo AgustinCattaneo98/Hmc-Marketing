@@ -29,6 +29,7 @@ import EmpresaModal from '../components/EmpresaModal'
 import ImportModal from '../components/ImportModal'
 import { SegmentoPills } from '../components/SegmentoPill'
 import { confirmDialog } from '../components/confirm'
+import CustomCheckbox from '../components/ui/CustomCheckbox'
 
 const filtroSelectClass =
   'glass-input px-3 py-2 text-sm text-hmc-white outline-none transition-colors focus:border-hmc-white'
@@ -469,15 +470,11 @@ export default function Empresas() {
         {/* Encabezado de tabla */}
         <div className="grid grid-cols-[36px_48px_2fr_140px_160px_120px_80px_80px] items-center gap-4 border-b border-hmc-border px-5 py-2.5 text-xs uppercase tracking-wide text-hmc-muted">
           <span className="flex items-center">
-            <input
-              type="checkbox"
+            <CustomCheckbox
               checked={allSelected}
-              ref={(el) => {
-                if (el) el.indeterminate = someSelected && !allSelected
-              }}
+              indeterminate={someSelected && !allSelected}
               onChange={toggleAll}
-              className="h-4 w-4 cursor-pointer accent-hmc-white"
-              aria-label="Seleccionar todas"
+              ariaLabel="Seleccionar todas"
             />
           </span>
           <span />
@@ -503,12 +500,10 @@ export default function Empresas() {
               }`}
             >
               <span className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                <input
-                  type="checkbox"
+                <CustomCheckbox
                   checked={selected.has(empresa.id)}
                   onChange={() => toggleOne(empresa.id)}
-                  className="h-4 w-4 cursor-pointer accent-hmc-white"
-                  aria-label={`Seleccionar ${empresa.nombre}`}
+                  ariaLabel={`Seleccionar ${empresa.nombre}`}
                 />
               </span>
               {empresa.logo_url ? (

@@ -12,6 +12,8 @@ import {
   TbX,
   TbLayoutKanban,
   TbCash,
+  TbFileImport,
+  TbFileSpreadsheet,
 } from 'react-icons/tb'
 import {
   getCotizaciones,
@@ -28,7 +30,10 @@ import { ESTADOS_COT, ESTADOS_COT_LIST, diasRestantes } from '../lib/cotizacione
 import { iniciales } from '../lib/utils'
 import { generarCotizacionPDF } from '../lib/generarPDF'
 import { confirmDialog } from '../components/confirm'
+import { exportarCotizaciones } from '../lib/exportar'
 import AsignarOportunidadModal from '../components/AsignarOportunidadModal'
+import ImportModal from '../components/ImportModal'
+import CustomCheckbox from '../components/ui/CustomCheckbox'
 
 function EstadoBadge({ estado }) {
   const e = ESTADOS_COT[estado] ?? ESTADOS_COT.borrador
@@ -61,6 +66,9 @@ export default function Cotizaciones() {
   const [empresas, setEmpresas] = useState([])
   const [modal, setModal] = useState(false)
   const [asignarCotId, setAsignarCotId] = useState(null)
+  const [selected, setSelected] = useState(() => new Set())
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
 
   async function load() {
     setLoading(true)
@@ -112,6 +120,63 @@ export default function Cotizaciones() {
     return c.empresa?.nombre || (c.contacto ? `${c.contacto.nombre ?? ''} ${c.contacto.apellido ?? ''}`.trim() : '') || c.cliente_nombre || ''
   }
 
+  // ---- Selección múltiple ----
+  const filteredIds = filtradas.map((c) => c.id)
+  const allSelected = filteredIds.length > 0 && filteredIds.every((id) => selected.has(id))
+  const someSelected = filteredIds.some((id) => selected.has(id))
+  function toggleOne(id) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(filteredIds))
+  }
+  function clearSeleccion() {
+    setSelected(new Set())
+  }
+  async function bulkBorrar() {
+    const ids = [...selected]
+    if (!ids.length) return
+    if (!(await confirmDialog(`¿Eliminar ${ids.length} cotización${ids.length === 1 ? '' : 'es'}? Esta acción no se puede deshacer.`))) return
+    setBulkBusy(true)
+    let fallidos = 0
+    for (const id of ids) {
+      const { error: err } = await deleteCotizacion(id)
+      if (err) fallidos++
+    }
+    setBulkBusy(false)
+    clearSeleccion()
+    await load()
+    if (fallidos) setError(`No se pudieron eliminar ${fallidos} cotización(es).`)
+  }
+
+  // Importa filas (ya mapeadas) de a una. Devuelve { exitosos, errores }.
+  async function handleImport(filas, onProgress) {
+    let exitosos = 0
+    const errores = []
+    for (let i = 0; i < filas.length; i++) {
+      const d = filas[i].data
+      const { error: err } = await createCotizacion({
+        titulo: d.nombre,
+        estado: d.estado || 'borrador',
+        cliente_nombre: d.cliente_nombre || null,
+        total_usd: d.total_usd ?? null,
+        total_ars: d.total_ars ?? null,
+        validez_dias: d.validez_dias ?? 7,
+        moneda_display: 'ARS',
+      })
+      if (err) errores.push({ fila: filas[i].fila, motivo: err.message })
+      else exitosos++
+      onProgress(i + 1, filas.length)
+    }
+    await load()
+    return { exitosos, errores }
+  }
+
   return (
     <div>
       {/* Header */}
@@ -120,10 +185,31 @@ export default function Cotizaciones() {
           <h1 className="text-2xl font-semibold text-hmc-white">Cotizaciones</h1>
           <p className="mt-1 text-sm text-hmc-muted">Presupuestos y propuestas</p>
         </div>
-        <button type="button" onClick={() => setModal(true)} className="inline-flex items-center gap-2 rounded-md bg-hmc-white px-4 py-2 text-sm font-semibold text-hmc-black hover:opacity-90">
-          <TbPlus size={18} />
-          Nueva cotización
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={async () => {
+              const { error: err } = await exportarCotizaciones()
+              if (err) setError('No se pudo exportar: ' + err)
+            }}
+            className="inline-flex items-center gap-2 rounded-md border border-hmc-border px-4 py-2 text-sm text-hmc-white transition-colors hover:bg-hmc-gray2"
+          >
+            <TbFileSpreadsheet size={18} />
+            Exportar
+          </button>
+          <button
+            type="button"
+            onClick={() => setImportOpen(true)}
+            className="inline-flex items-center gap-2 rounded-md border border-hmc-border px-4 py-2 text-sm text-hmc-white transition-colors hover:bg-hmc-gray2"
+          >
+            <TbFileImport size={18} />
+            Importar
+          </button>
+          <button type="button" onClick={() => setModal(true)} className="inline-flex items-center gap-2 rounded-md bg-hmc-white px-4 py-2 text-sm font-semibold text-hmc-black hover:opacity-90">
+            <TbPlus size={18} />
+            Nueva cotización
+          </button>
+        </div>
       </div>
 
       {/* Card dólar */}
@@ -161,6 +247,44 @@ export default function Cotizaciones() {
 
       {error && <p className="mb-4 rounded-md border border-red-900/50 bg-red-950/30 px-4 py-2.5 text-sm text-red-400">{error}</p>}
 
+      {/* Barra de selección / acciones masivas */}
+      {!loading && filtradas.length > 0 && (
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <CustomCheckbox
+            checked={allSelected}
+            indeterminate={someSelected && !allSelected}
+            onChange={toggleAll}
+            label={
+              selected.size > 0
+                ? `${selected.size} seleccionada${selected.size === 1 ? '' : 's'}`
+                : 'Seleccionar todas'
+            }
+          />
+          {selected.size > 0 && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={bulkBorrar}
+                disabled={bulkBusy}
+                className="inline-flex items-center gap-2 rounded-md border border-red-900/50 bg-red-950/20 px-3 py-1.5 text-sm text-red-400 transition-colors hover:bg-red-950/40 disabled:opacity-60"
+              >
+                <TbTrash size={16} />
+                Borrar
+              </button>
+              <button
+                type="button"
+                onClick={clearSeleccion}
+                disabled={bulkBusy}
+                className="inline-flex items-center gap-1 rounded-md border border-hmc-border px-3 py-1.5 text-sm text-hmc-muted transition-colors hover:text-hmc-white disabled:opacity-60"
+              >
+                <TbX size={16} />
+                Cancelar
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Lista */}
       {loading ? (
         <p className="text-sm text-hmc-muted">Cargando…</p>
@@ -177,14 +301,18 @@ export default function Cotizaciones() {
           {filtradas.map((c) => {
             const dias = diasRestantes(c)
             const cliente = clienteNombre(c)
+            const arsTotal = c.total_ars > 0 ? c.total_ars : (dolar?.venta ? Number(c.total_usd || 0) * dolar.venta : null)
             return (
               <div
                 key={c.id}
                 onClick={() => navigate(`/cotizaciones/${c.id}`)}
-                className={`cursor-pointer rounded-lg border bg-hmc-gray2 p-4 transition-colors hover:bg-hmc-gray3/40 active:scale-[0.99] ${c.cobrada ? '' : 'border-hmc-border hover:border-[#555]'}`}
+                className={`cursor-pointer rounded-lg border bg-hmc-gray2 p-4 transition-colors hover:bg-hmc-gray3/40 active:scale-[0.99] ${selected.has(c.id) ? 'ring-2 ring-purple-500/50 ' : ''}${c.cobrada ? '' : 'border-hmc-border hover:border-[#555]'}`}
                 style={c.cobrada ? { borderColor: '#44aa99' } : undefined}
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <span className="pt-0.5" onClick={(e) => e.stopPropagation()}>
+                    <CustomCheckbox checked={selected.has(c.id)} onChange={() => toggleOne(c.id)} ariaLabel={`Seleccionar ${c.numero}`} />
+                  </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs text-hmc-muted">{c.numero}</p>
                     <p className="text-lg font-medium text-hmc-white">{c.titulo}</p>
@@ -227,8 +355,8 @@ export default function Cotizaciones() {
 
                   <div className="flex shrink-0 flex-col items-end gap-2">
                     <div className="text-right">
-                      <p className="font-semibold text-hmc-white">{formatUSD(c.total_usd)}</p>
-                      {c.total_ars > 0 && <p className="text-xs text-hmc-muted">{formatARS(c.total_ars)}</p>}
+                      <p className="text-lg font-bold text-hmc-white">{arsTotal != null ? formatARS(arsTotal) : formatUSD(c.total_usd)}</p>
+                      <p className="text-xs text-hmc-muted">{formatUSD(c.total_usd)}</p>
                     </div>
                     <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                       <button type="button" onClick={() => navigate(`/cotizaciones/${c.id}`)} className="rounded p-1.5 text-hmc-muted hover:bg-hmc-gray3 hover:text-hmc-white" title="Editar"><TbEdit size={16} /></button>
@@ -254,6 +382,9 @@ export default function Cotizaciones() {
             load()
           }}
         />
+      )}
+      {importOpen && (
+        <ImportModal tipo="cotizaciones" onClose={() => setImportOpen(false)} onImport={handleImport} />
       )}
     </div>
   )

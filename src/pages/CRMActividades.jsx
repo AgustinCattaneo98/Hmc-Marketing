@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { confirmDialog } from '../components/confirm'
+import CustomCheckbox from '../components/ui/CustomCheckbox'
 import {
   DndContext,
   closestCorners,
@@ -379,7 +380,7 @@ function TabLista({ actividades, mostrarCompletadas, setMostrarCompletadas, onTo
     <div>
       <div className="mb-3 flex items-center justify-end">
         <label className="flex cursor-pointer items-center gap-2 text-xs text-hmc-white">
-          <input type="checkbox" checked={mostrarCompletadas} onChange={(e) => setMostrarCompletadas(e.target.checked)} className="accent-hmc-white" />
+          <CustomCheckbox checked={mostrarCompletadas} onChange={(e) => setMostrarCompletadas(e.target.checked)} />
           Mostrar completadas
         </label>
       </div>

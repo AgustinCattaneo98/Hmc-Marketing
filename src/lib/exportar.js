@@ -40,6 +40,41 @@ export async function exportarEntidad(tabla, hoja, nombreArchivo) {
   }
 }
 
+// Exporta las cotizaciones con campos legibles (número, cliente, estado,
+// total ARS, total USD, fecha). Devuelve { error }.
+export async function exportarCotizaciones(nombreArchivo = 'Cotizaciones') {
+  try {
+    const XLSX = await import('xlsx')
+    const { data, error } = await supabase
+      .from('cotizaciones')
+      .select(
+        'numero, estado, total_usd, total_ars, created_at, cliente_nombre, empresa:empresa_id(nombre), contacto:contacto_id(nombre, apellido)'
+      )
+      .order('created_at', { ascending: false })
+    if (error) return { error: error.message }
+    const filas = (data ?? []).map((c) => ({
+      Número: c.numero ?? '',
+      Cliente:
+        c.empresa?.nombre ||
+        (c.contacto ? `${c.contacto.nombre ?? ''} ${c.contacto.apellido ?? ''}`.trim() : '') ||
+        c.cliente_nombre ||
+        '',
+      Estado: c.estado ?? '',
+      'Total ARS': c.total_ars ?? '',
+      'Total USD': c.total_usd ?? '',
+      Fecha: c.created_at ? new Date(c.created_at).toLocaleDateString('es-AR') : '',
+    }))
+    const wb = XLSX.utils.book_new()
+    const ws = XLSX.utils.json_to_sheet(filas.length ? filas : [{}])
+    XLSX.utils.book_append_sheet(wb, ws, 'Cotizaciones')
+    const fecha = new Date().toISOString().slice(0, 10)
+    XLSX.writeFile(wb, `${nombreArchivo}_${fecha}.xlsx`)
+    return { error: null }
+  } catch (e) {
+    return { error: e.message }
+  }
+}
+
 // Genera y descarga un Excel con una hoja por tabla.
 // Devuelve { error } si algo falla.
 export async function exportarBaseDatos() {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { confirmDialog } from '../components/confirm'
+import CustomCheckbox from '../components/ui/CustomCheckbox'
 import {
   TbPlus,
   TbSearch,
@@ -12,6 +13,7 @@ import {
   TbRefresh,
   TbFileImport,
   TbFileSpreadsheet,
+  TbX,
 } from 'react-icons/tb'
 import {
   getCategorias,
@@ -83,7 +85,8 @@ export default function Productos() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
-  const [soloActivos, setSoloActivos] = useState(true)
+  const [selected, setSelected] = useState(() => new Set())
+  const [bulkBusy, setBulkBusy] = useState(false)
   const [vista, setVista] = useState('grid')
   const [prodModal, setProdModal] = useState(null) // { producto } | null
   const [catModal, setCatModal] = useState(null) // { categoria } | null
@@ -129,12 +132,44 @@ export default function Productos() {
 
   const filtrados = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return productos.filter((p) => {
-      if (q && !(p.nombre ?? '').toLowerCase().includes(q)) return false
-      if (soloActivos && !p.activo) return false
-      return true
+    return productos.filter((p) => !q || (p.nombre ?? '').toLowerCase().includes(q))
+  }, [productos, search])
+
+  // ---- Selección múltiple ----
+  const filteredIds = filtrados.map((p) => p.id)
+  const allSelected = filteredIds.length > 0 && filteredIds.every((id) => selected.has(id))
+  const someSelected = filteredIds.some((id) => selected.has(id))
+
+  function toggleOne(id) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
     })
-  }, [productos, search, soloActivos])
+  }
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(filteredIds))
+  }
+  function clearSeleccion() {
+    setSelected(new Set())
+  }
+  async function bulkBorrar() {
+    const ids = [...selected]
+    if (!ids.length) return
+    if (!(await confirmDialog(`¿Eliminar ${ids.length} producto${ids.length === 1 ? '' : 's'}? Esta acción no se puede deshacer.`))) return
+    setBulkBusy(true)
+    let fallidos = 0
+    for (const id of ids) {
+      const { error: err } = await deleteProducto(id)
+      if (err) fallidos++
+    }
+    setBulkBusy(false)
+    clearSeleccion()
+    await cargarProductos()
+    await cargarCategorias()
+    if (fallidos) setError(`No se pudieron eliminar ${fallidos} producto(s).`)
+  }
 
   const nombreCategoriaActiva = categoriaActiva
     ? categorias.find((c) => c.id === categoriaActiva)?.nombre ?? 'Productos'
@@ -272,13 +307,36 @@ export default function Productos() {
               <TbSearch size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-hmc-muted" />
               <input type="text" placeholder="Buscar producto…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-full glass-input py-2 pl-9 pr-3 text-sm text-hmc-white outline-none focus:border-hmc-white placeholder:text-hmc-muted" />
             </div>
-            <label className="flex shrink-0 cursor-pointer items-center gap-2 text-sm text-hmc-white">
-              <button type="button" onClick={() => setSoloActivos((v) => !v)} className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${soloActivos ? 'bg-green-500' : 'bg-hmc-gray3'}`}>
-                <span className={`absolute left-0.5 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-white transition-transform ${soloActivos ? 'translate-x-4' : 'translate-x-0'}`} />
-              </button>
-              Solo activos
-            </label>
           </div>
+
+          {/* Barra de acciones masivas */}
+          {selected.size > 0 && (
+            <div className="mb-4 flex items-center justify-between gap-3 glass-card px-4 py-2.5">
+              <span className="text-sm text-hmc-white">
+                {selected.size} seleccionado{selected.size === 1 ? '' : 's'}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={bulkBorrar}
+                  disabled={bulkBusy}
+                  className="inline-flex items-center gap-2 rounded-md border border-red-900/50 bg-red-950/20 px-3 py-1.5 text-sm text-red-400 transition-colors hover:bg-red-950/40 disabled:opacity-60"
+                >
+                  <TbTrash size={16} />
+                  Borrar
+                </button>
+                <button
+                  type="button"
+                  onClick={clearSeleccion}
+                  disabled={bulkBusy}
+                  className="inline-flex items-center gap-1 rounded-md border border-hmc-border px-3 py-1.5 text-sm text-hmc-muted transition-colors hover:text-hmc-white disabled:opacity-60"
+                >
+                  <TbX size={16} />
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
 
           {loading ? (
             <p className="text-sm text-hmc-muted">Cargando…</p>
@@ -294,11 +352,11 @@ export default function Productos() {
           ) : vista === 'grid' ? (
             <div className="grid grid-cols-2 gap-5 xl:grid-cols-3">
               {filtrados.map((p) => (
-                <ProductoCard key={p.id} p={p} cotizacion={cotizacion} onOpen={() => navigate(`/productos/${p.id}`)} onEdit={() => setProdModal({ producto: p })} onDelete={() => handleDeleteProducto(p)} />
+                <ProductoCard key={p.id} p={p} cotizacion={cotizacion} selected={selected.has(p.id)} onToggle={() => toggleOne(p.id)} onOpen={() => navigate(`/productos/${p.id}`)} onEdit={() => setProdModal({ producto: p })} onDelete={() => handleDeleteProducto(p)} />
               ))}
             </div>
           ) : (
-            <ProductoTabla productos={filtrados} cotizacion={cotizacion} onOpen={(p) => navigate(`/productos/${p.id}`)} onEdit={(p) => setProdModal({ producto: p })} onDelete={handleDeleteProducto} />
+            <ProductoTabla productos={filtrados} cotizacion={cotizacion} selected={selected} onToggleOne={toggleOne} onToggleAll={toggleAll} allSelected={allSelected} someSelected={someSelected} onOpen={(p) => navigate(`/productos/${p.id}`)} onEdit={(p) => setProdModal({ producto: p })} onDelete={handleDeleteProducto} />
           )}
         </div>
       </div>
@@ -347,14 +405,19 @@ function ConversionTxt({ precio, moneda, cotizacion }) {
   return <span className="text-xs text-hmc-muted">≈ {otro}</span>
 }
 
-function ProductoCard({ p, cotizacion, onOpen, onEdit, onDelete }) {
+function ProductoCard({ p, cotizacion, selected, onToggle, onOpen, onEdit, onDelete }) {
   const color = p.categoria?.color ?? '#777777'
   return (
     <div
       onClick={onOpen}
-      className="group cursor-pointer overflow-hidden glass-card transition-all hover:border-[#555] active:scale-[0.99]"
+      className={`group cursor-pointer overflow-hidden glass-card transition-all hover:border-[#555] active:scale-[0.99] ${
+        selected ? 'ring-2 ring-purple-500/50' : ''
+      }`}
     >
       <div className="relative flex aspect-video items-center justify-center" style={{ backgroundColor: `${color}22` }}>
+        <span className="absolute left-2 top-2 z-10" onClick={(e) => e.stopPropagation()}>
+          <CustomCheckbox checked={selected} onChange={onToggle} ariaLabel={`Seleccionar ${p.nombre}`} />
+        </span>
         {p.foto_url ? <img src={p.foto_url} alt="" className="h-full w-full object-cover" /> : <TbBike size={36} style={{ color }} />}
         <div className="absolute inset-0 hidden items-center justify-center gap-2 bg-black/60 group-hover:flex" onClick={(e) => e.stopPropagation()}>
           <button type="button" onClick={onEdit} className="rounded-md bg-hmc-gray2 p-2 text-hmc-white hover:bg-hmc-gray3" title="Editar"><TbPencil size={18} /></button>
@@ -380,10 +443,11 @@ function ProductoCard({ p, cotizacion, onOpen, onEdit, onDelete }) {
   )
 }
 
-function ProductoTabla({ productos, cotizacion, onOpen, onEdit, onDelete }) {
+function ProductoTabla({ productos, cotizacion, selected, onToggleOne, onToggleAll, allSelected, someSelected, onOpen, onEdit, onDelete }) {
   return (
     <div className="overflow-hidden glass-card">
-      <div className="grid grid-cols-[48px_2fr_1fr_1fr_1fr_auto_auto] items-center gap-3 border-b border-hmc-border px-4 py-2.5 text-xs uppercase tracking-wide text-hmc-muted">
+      <div className="grid grid-cols-[90px_48px_2fr_1fr_1fr_1fr_auto_auto] items-center gap-3 border-b border-hmc-border px-4 py-2.5 text-xs uppercase tracking-wide text-hmc-muted">
+        <CustomCheckbox checked={allSelected} indeterminate={someSelected && !allSelected} onChange={onToggleAll} label="Seleccionar" />
         <span />
         <span>Nombre</span>
         <span>Categoría</span>
@@ -400,7 +464,10 @@ function ProductoTabla({ productos, cotizacion, onOpen, onEdit, onDelete }) {
             ? conv.usd ? formatMonto(conv.usd, 'USD') : '—'
             : conv.ars ? formatMonto(conv.ars, 'ARS') : '—'
         return (
-          <div key={p.id} onClick={() => onOpen(p)} className="grid cursor-pointer grid-cols-[48px_2fr_1fr_1fr_1fr_auto_auto] items-center gap-3 border-b border-hmc-border px-4 py-2.5 text-sm transition-colors last:border-b-0 hover:bg-hmc-gray3/60 active:scale-[0.99]">
+          <div key={p.id} onClick={() => onOpen(p)} className={`grid cursor-pointer grid-cols-[90px_48px_2fr_1fr_1fr_1fr_auto_auto] items-center gap-3 border-b border-hmc-border px-4 py-2.5 text-sm transition-colors last:border-b-0 hover:bg-hmc-gray3/60 active:scale-[0.99] ${selected.has(p.id) ? 'bg-hmc-gray3/40' : ''}`}>
+            <span className="flex items-center" onClick={(e) => e.stopPropagation()}>
+              <CustomCheckbox checked={selected.has(p.id)} onChange={() => onToggleOne(p.id)} ariaLabel={`Seleccionar ${p.nombre}`} />
+            </span>
             <div className="flex h-10 w-12 items-center justify-center overflow-hidden rounded" style={{ backgroundColor: `${color}22` }}>
               {p.foto_url ? <img src={p.foto_url} alt="" className="h-full w-full object-cover" /> : <TbBike size={16} style={{ color }} />}
             </div>

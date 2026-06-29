@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar'
 import { confirmDialog } from '../components/confirm'
+import CustomCheckbox from '../components/ui/CustomCheckbox'
 import {
   format,
   parse,
@@ -385,7 +386,7 @@ function EventoCalendario({ event }) {
 function FiltrosDropdown({ fuentes, setFuentes, tipos, setTipos, estados, setEstados, toggleSet, onClose }) {
   const Check = ({ checked, onChange, label, color }) => (
     <label className="flex cursor-pointer items-center gap-2 py-1 text-sm text-hmc-white">
-      <input type="checkbox" checked={checked} onChange={onChange} className="accent-hmc-white" />
+      <CustomCheckbox checked={checked} onChange={onChange} />
       {color && <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />}
       {label}
     </label>

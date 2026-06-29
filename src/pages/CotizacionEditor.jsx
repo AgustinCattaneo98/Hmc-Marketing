@@ -31,6 +31,7 @@ import {
   TbPackage,
   TbCash,
   TbFileCheck,
+  TbExternalLink,
 } from 'react-icons/tb'
 import {
   getCotizacion,
@@ -57,6 +58,7 @@ import { ESTADOS_COT, ESTADOS_COT_LIST, subtotalItem, calcularTotales } from '..
 import { iniciales } from '../lib/utils'
 import { generarCotizacionPDF } from '../lib/generarPDF'
 import { confirmDialog } from '../components/confirm'
+import CustomCheckbox from '../components/ui/CustomCheckbox'
 import {
   STORAGE,
   DEFAULT_COT_COND_PAGO,
@@ -415,7 +417,7 @@ export default function CotizacionEditor() {
                 <SortableContext items={items.map((i) => i._uid)} strategy={verticalListSortingStrategy}>
                   <div className="flex flex-col gap-2">
                     {items.map((it, i) => (
-                      <ItemRow key={it._uid} item={it} num={i + 1} tc={tc} onCampo={updateItemCampo} onRemove={removeItem} />
+                      <ItemRow key={it._uid} item={it} num={i + 1} tc={tc} onCampo={updateItemCampo} onRemove={removeItem} onProducto={(pid) => navigate(`/productos/${pid}`)} />
                     ))}
                   </div>
                 </SortableContext>
@@ -476,7 +478,7 @@ export default function CotizacionEditor() {
             <div className="rounded-lg border border-hmc-border bg-hmc-gray3 p-4">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-hmc-muted">Subtotal</span>
-                <span className="text-hmc-white">{formatUSD(totales.subtotalUsd)} <span className="text-hmc-muted">/ {formatARS(totales.subtotalUsd * tc)}</span></span>
+                <span className="text-hmc-white">{tc > 0 ? formatARS(totales.subtotalUsd * tc) : formatUSD(totales.subtotalUsd)} <span className="text-hmc-muted">/ {formatUSD(totales.subtotalUsd)}</span></span>
               </div>
               <div className="mt-2 flex items-center justify-between text-sm">
                 <span className="text-hmc-muted">Descuento global %</span>
@@ -491,8 +493,8 @@ export default function CotizacionEditor() {
               <div className="flex items-end justify-between">
                 <span className="text-sm text-hmc-muted">TOTAL</span>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-hmc-white">{formatUSD(totales.totalUsd)}</p>
-                  <p className="text-xl font-semibold" style={{ color: '#44aa99' }}>{formatARS(totales.totalArs)}</p>
+                  <p className="text-2xl font-bold text-hmc-white">{tc > 0 ? formatARS(totales.totalArs) : formatUSD(totales.totalUsd)}</p>
+                  <p className="text-sm font-semibold text-hmc-muted">{formatUSD(totales.totalUsd)}</p>
                 </div>
               </div>
               {tc > 0 && <p className="mt-1 text-right text-xs text-hmc-muted">al tipo de cambio: ${tc}</p>}
@@ -729,7 +731,7 @@ function ConfirmarCobroModal({ cot, dolar, tcActual, onClose, onConfirmado }) {
 
           {cot.oportunidad_id && (
             <label className="mt-4 flex cursor-pointer items-center gap-2 text-sm text-hmc-white">
-              <input type="checkbox" checked={moverOp} onChange={(e) => setMoverOp(e.target.checked)} className="accent-hmc-white" />
+              <CustomCheckbox checked={moverOp} onChange={(e) => setMoverOp(e.target.checked)} />
               Mover oportunidad CRM a “Cerrado ganado”
             </label>
           )}
@@ -785,7 +787,7 @@ function EstadoBadge({ estado }) {
   return <span className="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium" style={{ backgroundColor: `${e.color}22`, color: e.color }}>{e.label}</span>
 }
 
-function ItemRow({ item, num, tc, onCampo, onRemove }) {
+function ItemRow({ item, num, tc, onCampo, onRemove, onProducto }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item._uid })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
   const sub = subtotalItem(item)
@@ -798,16 +800,30 @@ function ItemRow({ item, num, tc, onCampo, onRemove }) {
     <div ref={setNodeRef} style={style} className="rounded-md border border-hmc-border bg-hmc-black p-2.5 hover:bg-hmc-gray3/40">
       <div className="flex items-start gap-3">
         <button type="button" {...attributes} {...listeners} className="mt-1 cursor-grab text-hmc-muted hover:text-hmc-white" title="Arrastrar"><TbGripVertical size={16} /></button>
-        {item.foto_url ? (
-          <img src={item.foto_url} alt="" className="h-11 w-11 shrink-0 rounded-md object-cover" />
-        ) : (
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-hmc-gray3">
-            <TbPackage size={16} className="text-hmc-muted" />
-          </div>
-        )}
+        {(() => {
+          const thumb = item.foto_url ? (
+            <img src={item.foto_url} alt="" className="h-11 w-11 rounded-md object-cover" />
+          ) : (
+            <div className="flex h-11 w-11 items-center justify-center rounded-md bg-hmc-gray3">
+              <TbPackage size={16} className="text-hmc-muted" />
+            </div>
+          )
+          return item.producto_id ? (
+            <button type="button" onClick={() => onProducto(item.producto_id)} title="Ver producto" className="shrink-0 cursor-pointer transition-opacity hover:opacity-80">
+              {thumb}
+            </button>
+          ) : (
+            <div className="shrink-0">{thumb}</div>
+          )
+        })()}
         <span className="mt-1.5 text-xs text-hmc-muted">#{num}</span>
         <div className="min-w-0 flex-1">
-          <input value={item.descripcion} onChange={(e) => onCampo(item._uid, 'descripcion', e.target.value)} placeholder="Descripción" className="w-full border-b border-transparent bg-transparent py-1 text-sm text-hmc-white outline-none placeholder:text-hmc-muted focus:border-hmc-border" />
+          <div className="flex items-center gap-1.5">
+            <input value={item.descripcion} onChange={(e) => onCampo(item._uid, 'descripcion', e.target.value)} placeholder="Descripción" className="w-full border-b border-transparent bg-transparent py-1 text-sm text-hmc-white outline-none placeholder:text-hmc-muted focus:border-hmc-border" />
+            {item.producto_id && (
+              <button type="button" onClick={() => onProducto(item.producto_id)} title="Ver producto" className="shrink-0 cursor-pointer text-hmc-muted transition-colors hover:text-hmc-white"><TbExternalLink size={14} /></button>
+            )}
+          </div>
           <input value={item.detalle} onChange={(e) => onCampo(item._uid, 'detalle', e.target.value)} placeholder="Detalle (opcional)" className="w-full border-b border-transparent bg-transparent py-0.5 text-xs text-hmc-muted outline-none placeholder:text-hmc-muted focus:border-hmc-border" />
 
           <div className="mt-2 flex flex-wrap items-start gap-3">
@@ -816,9 +832,17 @@ function ItemRow({ item, num, tc, onCampo, onRemove }) {
               <input type="number" min={1} value={item.cantidad} onChange={(e) => onCampo(item._uid, 'cantidad', e.target.value)} className="h-8 w-16 rounded border border-hmc-border bg-hmc-gray2 px-2 text-sm text-hmc-white outline-none focus:border-hmc-white" />
             </div>
             <div className="flex flex-col">
-              <label className="mb-1 block h-3 text-[10px] uppercase leading-3 text-hmc-muted">P. unit USD</label>
-              <input type="number" step="0.01" value={item.precio_usd} onChange={(e) => onCampo(item._uid, 'precio_usd', e.target.value)} className="h-8 w-24 rounded border border-hmc-border bg-hmc-gray2 px-2 text-sm text-hmc-white outline-none focus:border-hmc-white" />
-              {tc > 0 && <span className="mt-0.5 block text-[10px] text-hmc-muted">{formatARS(precioArs)}</span>}
+              <label className="mb-1 block h-3 text-[10px] uppercase leading-3 text-hmc-muted">P. unit ARS</label>
+              <input
+                type="number"
+                step="1"
+                value={tc > 0 ? Math.round(Number(item.precio_usd || 0) * tc) : ''}
+                onChange={(e) => tc > 0 && onCampo(item._uid, 'precio_usd', Number(e.target.value || 0) / tc)}
+                disabled={!(tc > 0)}
+                placeholder={tc > 0 ? '' : 'definí el TC'}
+                className="h-8 w-28 rounded border border-hmc-border bg-hmc-gray2 px-2 text-sm text-hmc-white outline-none focus:border-hmc-white disabled:opacity-50"
+              />
+              <span className="mt-0.5 block text-[10px] text-hmc-muted">≈ {formatUSD(Number(item.precio_usd || 0))} USD</span>
             </div>
             <div className="flex flex-col">
               <label className="mb-1 block h-3 text-[10px] uppercase leading-3 text-hmc-muted">Desc. %</label>
@@ -826,9 +850,9 @@ function ItemRow({ item, num, tc, onCampo, onRemove }) {
             </div>
             <div className="ml-auto flex flex-col text-right">
               <label className="mb-1 block h-3 text-[10px] uppercase leading-3 text-hmc-muted">Subtotal</label>
-              <span className="flex h-8 items-center justify-end text-sm font-semibold text-hmc-white">{formatUSD(sub)}</span>
+              <span className="flex h-8 items-center justify-end text-sm font-semibold text-hmc-white">{tc > 0 ? formatARS(subArs) : formatUSD(sub)}</span>
               {conDescuento && <span className="block text-[10px] text-hmc-muted line-through">{formatUSD(precioBase)}</span>}
-              {tc > 0 && <span className="block text-[10px] text-hmc-muted">{formatARS(subArs)}</span>}
+              {tc > 0 && <span className="block text-[10px] text-hmc-muted">{formatUSD(sub)}</span>}
             </div>
             <div className="flex flex-col">
               <span className="mb-1 block h-3" />

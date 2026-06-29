@@ -24,6 +24,7 @@ import {
 import { iniciales, limpiarWhatsapp } from '../lib/utils'
 import { SegmentoPills } from '../components/SegmentoPill'
 import { confirmDialog } from '../components/confirm'
+import CustomCheckbox from '../components/ui/CustomCheckbox'
 import ContactoModal from '../components/ContactoModal'
 import ImportModal from '../components/ImportModal'
 
@@ -345,20 +346,16 @@ export default function Contactos() {
       {/* Barra de selección / acciones masivas */}
       {!loading && filtered.length > 0 && (
         <div className="mb-3 flex items-center justify-between gap-3">
-          <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-hmc-muted">
-            <input
-              type="checkbox"
-              checked={allSelected}
-              ref={(el) => {
-                if (el) el.indeterminate = someSelected && !allSelected
-              }}
-              onChange={toggleAll}
-              className="h-4 w-4 cursor-pointer accent-hmc-white"
-            />
-            {selected.size > 0
-              ? `${selected.size} seleccionado${selected.size === 1 ? '' : 's'}`
-              : 'Seleccionar todos'}
-          </label>
+          <CustomCheckbox
+            checked={allSelected}
+            indeterminate={someSelected && !allSelected}
+            onChange={toggleAll}
+            label={
+              selected.size > 0
+                ? `${selected.size} seleccionado${selected.size === 1 ? '' : 's'}`
+                : 'Seleccionar todos'
+            }
+          />
           {selected.size > 0 && (
             <div className="flex items-center gap-2">
               <button
@@ -410,12 +407,10 @@ export default function Contactos() {
             >
               {/* Checkbox de selección */}
               <span className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                <input
-                  type="checkbox"
+                <CustomCheckbox
                   checked={selected.has(c.id)}
                   onChange={() => toggleOne(c.id)}
-                  className="h-4 w-4 cursor-pointer accent-hmc-white"
-                  aria-label="Seleccionar contacto"
+                  ariaLabel="Seleccionar contacto"
                 />
               </span>
 

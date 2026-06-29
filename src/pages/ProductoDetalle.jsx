@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { confirmDialog } from '../components/confirm'
+import CustomCheckbox from '../components/ui/CustomCheckbox'
 import {
   TbArrowLeft,
   TbPencil,
@@ -288,7 +289,7 @@ export default function ProductoDetalle() {
             {variantes.map((v) => (
               <label key={v.id} className="flex cursor-pointer items-center justify-between text-sm">
                 <span className="flex items-center gap-2 text-hmc-white">
-                  <input type="checkbox" checked={seleccionados.has(v.id)} onChange={() => toggleSel(v.id)} className="accent-hmc-white" />
+                  <CustomCheckbox checked={seleccionados.has(v.id)} onChange={() => toggleSel(v.id)} />
                   {v.nombre}
                 </span>
                 <span className="text-hmc-muted">+{formatMonto(v.precio_usd, moneda)}</span>
